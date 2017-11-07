@@ -36,11 +36,12 @@ class MyDriver(Driver):
         super().__init__()
         self.epochCounter = 0
         self.model = SteeringNN(19,1)
+        self.steering = 0
 
     def drive(self, carstate: State) -> Command:
         # Interesting stuff
 
-        steering_intensity = 0.25
+        steering_intensity = 0.2
 
         command = Command()
         if keyboard.is_pressed("w"):
@@ -48,12 +49,25 @@ class MyDriver(Driver):
         if keyboard.is_pressed("s"):
             command.brake = 1
         if keyboard.is_pressed("a"):
-            command.steering = steering_intensity
+            if self.steering >= 0:
+                self.steering = self.steering + (1-self.steering)*steering_intensity
+                command.steering = self.steering
+            else:
+                command.steering = 0
+
         if keyboard.is_pressed("d"):
-            command.steering = -steering_intensity
+            if self.steering <= 0:
+                self.steering = self.steering - (1-self.steering)*steering_intensity
+                command.steering = self.steering
+            else:
+                command.steering = 0
 
-
+        if not keyboard.is_pressed("a") and not keyboard.is_pressed("d"):
+            self.steering = 0
         self.epochCounter +=1
+
+
+
 
         acceleration = command.accelerator
 
@@ -70,7 +84,7 @@ class MyDriver(Driver):
         # else:
         #     command.brake = min(-acceleration,)
 
-        if carstate.rpm < 2500 & carstate.gear != 0:
+        if carstate.rpm < 2500 and carstate.gear != 0:
             command.gear = carstate.gear - 1
 
         if not command.gear:
