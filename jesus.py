@@ -66,3 +66,4 @@ class MyDriver(Driver):
         if carstate.rpm < 2500 and command.accelerator == 0:
             return carstate.gear - 1
         return carstate.gear
+    
