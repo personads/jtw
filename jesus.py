@@ -1,6 +1,7 @@
 from pytocl.driver import Driver
 from pytocl.car import State, Command
 import torch
+import keyboard
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
@@ -38,15 +39,42 @@ class MyDriver(Driver):
 
     def drive(self, carstate: State) -> Command:
         # Interesting stuff
-        command = Command()
-        if carstate.speed_x < 15 :
-            command.accelerator = 1.0
 
-        command.gear = self.calcGear(command,carstate)
+        steering_intensity = 0.25
+
+        command = Command()
+        if keyboard.is_pressed("w"):
+            command.accelerator = 1
+        if keyboard.is_pressed("s"):
+            command.brake = 1
+        if keyboard.is_pressed("a"):
+            command.steering = steering_intensity
+        if keyboard.is_pressed("d"):
+            command.steering = -steering_intensity
+
+
         self.epochCounter +=1
 
+        acceleration = command.accelerator
 
+        if acceleration > 0:
+            if abs(carstate.distance_from_center) >= 1:
+                # off track, reduced grip:
+                acceleration = min(0.4, acceleration)
 
+            command.accelerator = min(acceleration, 1)
+
+            if carstate.rpm > 8000:
+                command.gear = carstate.gear + 1
+
+        # else:
+        #     command.brake = min(-acceleration,)
+
+        if carstate.rpm < 2500 & carstate.gear != 0:
+            command.gear = carstate.gear - 1
+
+        if not command.gear:
+            command.gear = carstate.gear or 1
 
 
         #if self.epochCounter % 100 == 0:
@@ -60,10 +88,3 @@ class MyDriver(Driver):
 
 
 
-    def calcGear(self, command, carstate: State):
-        if carstate.rpm > 8000 and command.accelerator > 0:
-            return carstate.gear + 1
-        if carstate.rpm < 2500 and command.accelerator == 0:
-            return carstate.gear - 1
-        return carstate.gear
-    
