@@ -16,4 +16,4 @@ After we have this we could make a dataset and race a few laps/ different circui
 A few tricks:
 F2 - switch camera mode(there are more but I think this is only one which lets you drive properly)
 
-\+ and - keys on a keyboard (might be a bit different for you) let you make the game slower/faster which comes handy when you have to make sharp turn (I found it best at 0.5 for normal race and sometimes switched to 0.25 when there were 90 degree + turns)
+\+ and - keys on a keyboard (might be a bit different for you) let you make the game slower/faster which comes handy when you have to make sharp turn (I found it best at 0.5 speed for normal race and sometimes switched to 0.25 when there were 90 degree + turns)
