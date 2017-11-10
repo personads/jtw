@@ -10,6 +10,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
+from utils.loss import RacingLoss
+
 class SteeringNN(nn.Module):
     def __init__(self, sensors, first):
         super().__init__()
@@ -33,7 +35,7 @@ class SteeringNN(nn.Module):
 
 
 
-class MyDriver(Driver):
+class ManualDriver(Driver):
     # Override the `drive` method to create your own driver
 
     def __init__(self):
@@ -41,6 +43,7 @@ class MyDriver(Driver):
         self.epochCounter = 0
         self.model = SteeringNN(19,1)
         self.steering = 0
+        self.loss = RacingLoss()
 
     def drive(self, carstate: State) -> Command:
         # Interesting stuff
@@ -48,6 +51,9 @@ class MyDriver(Driver):
         steering_intensity = 0.2
 
         command = Command()
+
+        if self.epochCounter%1000 == 0: print("RacingLoss:", self.loss.calc_loss(carstate))
+
         if keyboard.is_pressed("w"):
             command.accelerator = 1
         if keyboard.is_pressed("s"):
