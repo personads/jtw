@@ -52,7 +52,7 @@ class ManualDriver(Driver):
 
         command = Command()
 
-        if self.epochCounter%1000 == 0: print("RacingLoss:", self.loss.calc_loss(carstate))
+        if self.epochCounter%100 == 0: print("RacingLoss:", self.loss.calc_loss(carstate))
 
         if keyboard.is_pressed("w"):
             command.accelerator = 1
