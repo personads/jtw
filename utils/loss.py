@@ -8,7 +8,7 @@ from config import *
 
 #class RacingLoss(torch.nn.Criterion):
 class RacingLoss:
-    def __init__(self, weights={'current_lap_time': .05, 
+    def __init__(self, weights={'current_lap_time': .0, 
                                 'damage': .05, 
                                 'distance_raced': 0.5, 
                                 'race_position': .1,
@@ -33,7 +33,7 @@ class RacingLoss:
                     res += self.weights[prop]/len(state[prop]) * prop_val
             else:
                 prop_val = np.abs(state[prop])
-                if prop in ['distance_raced', 'race_position', 'speed_x', 'speed_y']:
+                if prop in ['distance_raced', 'race_position', 'speed_x']:
                     prop_val = 1/prop_val if prop_val > 0 else 1
                 res += self.weights[prop] * prop_val
         return res

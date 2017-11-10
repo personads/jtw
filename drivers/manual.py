@@ -48,11 +48,11 @@ class ManualDriver(Driver):
     def drive(self, carstate: State) -> Command:
         # Interesting stuff
 
-        steering_intensity = 0.2
+        steering_intensity = 0.5
 
         command = Command()
 
-        if self.epochCounter%100 == 0: print("RacingLoss:", self.loss.calc_loss(carstate))
+        if self.epochCounter%100 == 0: print("RacingLoss:", self.loss.calc_loss(carstate), "\n")
 
         if keyboard.is_pressed("w"):
             command.accelerator = 1
