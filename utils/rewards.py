@@ -6,23 +6,15 @@ from collections import defaultdict
 
 from config import *
 
-class RacingReward:
-    def __init__(self, weights={'damage': -1., 
-                                'distance_raced': 1., 
-                                'race_position': 1.,
-                                'speed_x': 1.,
-                                'distances_from_edge': 1.,
-                                'distance_from_center': -.5}):
-        self.weights = defaultdict(float, weights)
-
-    def calc_reward(self, state):
-        res = 0.
-        state = state_to_dict(state)
-        for prop in self.weights:
-            print(prop, state[prop])
-            if type(state[prop]) is tuple:
-                for prop_val in state[prop]:
-                    res += self.weights[prop]/len(state[prop]) * prop_val
-            else:
-                res += self.weights[prop] * state[prop]
-        return res
+def cumulative_reward(state):
+    res = 0.
+    state = state_to_dict(state)
+    print(state)
+    res -= .5 * state['damage']
+    res += .1 * state['distance_raced']
+    res *= 1/state['race_position']
+    edge_dists = sum([v for v in state['distances_from_edge']])
+    res += .1 * edge_dists if edge_dists > 0 else -1. * edge_dists
+    res -= 20* np.abs(state['distance_from_center'])
+    res *= .1* state['speed_x'] if res > 0 else np.abs(state['speed_x'])
+    return res

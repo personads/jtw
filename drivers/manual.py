@@ -8,7 +8,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-from utils.rewards import RacingReward
+from utils.rewards import cumulative_reward
 
 class SteeringNN(nn.Module):
     def __init__(self, sensors, first):
@@ -40,7 +40,7 @@ class ManualDriver(Driver):
         self.steering = 0
         self.data = []
         self.dataClean = []
-        self.loss = RacingLoss()
+        self.reward_function = cumulative_reward
 
 
     def check_save_data(self):
@@ -151,6 +151,6 @@ class ManualDriver(Driver):
         self.append_data(command,carstate)
         self.check_save_data()
 
-        if self.epochCounter % 100 == 0: print("RacingReward:", self.loss.calc_reward(carstate), "\n")
+        if self.epochCounter % 100 == 0: print("RacingReward:", self.reward_function(carstate), "\n")
 
         return command
