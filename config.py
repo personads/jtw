@@ -26,7 +26,7 @@ STATE_PROPERTIES = [
 def state_to_dict(state):
     res = {}
     for prop in STATE_PROPERTIES:
-        res[prop] = eval('state.'+prop)
+        res[prop] = eval('state.' + prop)
     return res
 
 def dict_to_vector(dict_in, properties, requires_grad):
@@ -41,3 +41,9 @@ def dict_to_vector(dict_in, properties, requires_grad):
 
 def state_to_vector(state):
     return dict_to_vector(state_to_dict(state), STATE_PROPERTIES, False)
+
+def vector_to_command(vector):
+    res = Command()
+    for i, prop in enumerate(COMMAND_PROPERTIES):
+        eval('res.' + prop + '=' + str(vector[i]))
+    return res
