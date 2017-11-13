@@ -1,5 +1,3 @@
-from torch.autograd import Variable
-
 COMMAND_PROPERTIES = ['accelerator', 'brake', 'gear', 'steering', 'focus']
 STATE_PROPERTIES = [
     'angle',
@@ -22,6 +20,9 @@ STATE_PROPERTIES = [
     'z',
     'focused_distances_from_edge'
 ]
+COMMAND_MASK = [True, True, False, True, False]
+STATE_VECTOR_SIZE = 78
+COMMAND_VECTOR_SIZE = COMMAND_MASK.count(True)
 
 def state_to_dict(state):
     res = {}
@@ -37,7 +38,7 @@ def dict_to_vector(dict_in, properties, requires_grad):
                 res.append(val)
         else:
             res.append(dict_in[prop])
-    return Variable(res, required_grad=requires_grad)
+    return res
 
 def state_to_vector(state):
     return dict_to_vector(state_to_dict(state), STATE_PROPERTIES, False)
