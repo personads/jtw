@@ -1,3 +1,5 @@
+from pytocl.car import State, Command
+
 COMMAND_PROPERTIES = ['accelerator', 'brake', 'gear', 'steering', 'focus']
 STATE_PROPERTIES = [
     'angle',
@@ -17,10 +19,11 @@ STATE_PROPERTIES = [
     'distances_from_edge',
     'distance_from_center',
     'wheel_velocities',
-    'z',
+#    'z',
     'focused_distances_from_edge'
 ]
 COMMAND_MASK = [True, True, False, True, False]
+COMMAND_MASKED_PROPERTIES = [COMMAND_PROPERTIES[i] for i in range(len(COMMAND_PROPERTIES)) if COMMAND_MASK[i]]
 STATE_VECTOR_SIZE = 78
 COMMAND_VECTOR_SIZE = COMMAND_MASK.count(True)
 
@@ -45,6 +48,7 @@ def state_to_vector(state):
 
 def vector_to_command(vector):
     res = Command()
-    for i, prop in enumerate(COMMAND_PROPERTIES):
-        eval('res.' + prop + '=' + str(vector[i]))
+    res.accelerator = vector[0] 
+    res.brake = vector[1] 
+    res.steering = vector[2] 
     return res

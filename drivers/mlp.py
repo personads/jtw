@@ -10,7 +10,7 @@ class MLPDriver(Driver):
         super().__init__()
         self.epochCounter = 0
         self.model = MultiLayerPerceptron()
-        self.model.load('mlp_driver_100k/')
+        self.model.restore('mlp_driver_100k/')
 
     def calc_gear(self, command, carstate):
         acceleration = command.accelerator
@@ -27,5 +27,6 @@ class MLPDriver(Driver):
         current_state = state_to_vector(carstate)
         command_vector = self.model.predict([current_state])[0]
         command = vector_to_command(command_vector)
-        self.calc_gear(command)
+        self.calc_gear(command, carstate)
+        if self.epochCounter%100 == 0: print(command_vector)
         return command
