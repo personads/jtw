@@ -39,7 +39,7 @@ class MultiLayerPerceptron(TensorFlowDisciple):
         self.tf_session = tf_session if tf_session else tf.Session()
         self.tf_session.run(tf.global_variables_initializer())
 
-    def train(self, train_in, train_out, batch_size=100):
+    def train(self, train_in, train_out, batch_size=400):
         '''
         Train the MLP on given data
 
@@ -56,7 +56,7 @@ class MultiLayerPerceptron(TensorFlowDisciple):
         for train_i in range(self.iterations):
             if self.verbose:
                 sys.stdout.write('\riteration: %d of %d (%f loss)' % (train_i+1, self.iterations, cur_loss))
-                if train_i%500 == 0: cur_loss = self.tf_session.run(self.tf_loss, feed_dict={self.tf_input: train_in, self.tf_truth: train_out})
+                if train_i%1000 == 0: cur_loss = self.tf_session.run(self.tf_loss, feed_dict={self.tf_input: train_in, self.tf_truth: train_out})
                 sys.stdout.flush()
             # create batch
             cur_train_in, cur_train_out = self._create_next_batch(train_in, train_out, batch_size)

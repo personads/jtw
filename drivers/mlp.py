@@ -28,5 +28,6 @@ class MLPDriver(Driver):
         command_vector = self.model.predict([current_state])[0]
         command = vector_to_command(command_vector)
         self.calc_gear(command, carstate)
-        if self.epochCounter%100 == 0: print(command_vector)
+        #if self.epochCounter%100 == 0: print(command_vector)
+        if self.epochCounter%100 == 0: print(carstate.speed_x, " ",carstate.speed_y, " ",carstate.speed_z)
         return command

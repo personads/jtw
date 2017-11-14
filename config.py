@@ -24,13 +24,20 @@ STATE_PROPERTIES = [
 ]
 COMMAND_MASK = [True, True, False, True, False]
 COMMAND_MASKED_PROPERTIES = [COMMAND_PROPERTIES[i] for i in range(len(COMMAND_PROPERTIES)) if COMMAND_MASK[i]]
-STATE_VECTOR_SIZE = 78
+STATE_VECTOR_SIZE = 23
 COMMAND_VECTOR_SIZE = COMMAND_MASK.count(True)
-
+STATE_MASK = {
+    'angle',
+    'speed_x',
+    'speed_y',
+    'distances_from_edge',
+    'distance_from_center',
+}
 def state_to_dict(state):
     res = {}
     for prop in STATE_PROPERTIES:
-        res[prop] = eval('state.' + prop)
+        if prop in STATE_MASK:
+            res[prop] = eval('state.' + prop)
     return res
 
 def dict_to_vector(dict_in, properties, requires_grad):
@@ -44,7 +51,7 @@ def dict_to_vector(dict_in, properties, requires_grad):
     return res
 
 def state_to_vector(state):
-    return dict_to_vector(state_to_dict(state), STATE_PROPERTIES, False)
+    return dict_to_vector(state_to_dict(state), STATE_MASK, False)
 
 def vector_to_command(vector):
     res = Command()

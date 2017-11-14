@@ -1,8 +1,7 @@
 import numpy as np
 import torch.nn as nn
-import torch
-import torch.functional as F
 import torch.optim as optim
+
 from sklearn import preprocessing
 
 def SOM_pos(neuron, map_shape):
