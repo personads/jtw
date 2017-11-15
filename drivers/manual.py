@@ -3,43 +3,16 @@ import numpy as np
 from pytocl.driver import Driver
 from pytocl.car import State, Command
 import keyboard
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
 
-
-class SteeringNN(nn.Module):
-    def __init__(self, sensors, first):
-        super().__init__()
-        self.linear1 = nn.Linear(sensors, first)
-        # self.linear2 = nn.Linear(first,second)
-        self.optimizer = optim.SGD(self.parameters(), lr=0.01)
-
-    def forward(self, x):
-        x = self.linear1(x)
-
-    def update(self, true, calc):
-        loss = nn.MSELoss()
-        output = loss(true, calc)
-        output.backward()
-        self.optimizer.step()
-
-    def save(self):
-        self.save_state_dict('mytraining.pt')
-
-
-class MyDriver(Driver):
+class ManualDriver(Driver):
     # Override the `drive` method to create your own driver
 
     def __init__(self):
         super().__init__()
         self.epochCounter = 0
-        self.model = SteeringNN(19, 1)
         self.steering = 0
         self.data = []
         self.dataClean = []
-
 
     def check_save_data(self):
 
@@ -148,11 +121,5 @@ class MyDriver(Driver):
         self.epochCounter += 1
         self.append_data(command,carstate)
         self.check_save_data()
-
-        # if self.epochCounter % 100 == 0:
-
-
-
-
 
         return command
