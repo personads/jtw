@@ -42,17 +42,10 @@ class MultiLayerPerceptron(TensorFlowDisciple):
     def train(self, train_in, train_out, batch_size=400):
         '''
         Train the MLP on given data
-
-        The training data must be a list of dicts with each containing the feature keys and their values for one data point.
-        E.g. [{'feature-0': value}]
-
-        Keyword arguments:
-            training_data (list): training data points
-            batch_size (int): size of training data batches
         '''
         if self.verbose: print("training Multi-Layer Perceptron...")
         self.seek = 0
-        cur_loss = 42.
+        cur_loss = 42. # init loss
         for train_i in range(self.iterations):
             if self.verbose:
                 sys.stdout.write('\riteration: %d of %d (%f loss)' % (train_i+1, self.iterations, cur_loss))
@@ -67,5 +60,8 @@ class MultiLayerPerceptron(TensorFlowDisciple):
     def predict(self, pred_in):
         if self.verbose: print("predicting classes...")
         res = self.tf_session.run(self.tf_model, feed_dict={self.tf_input: pred_in})
-
         return res
+
+    def take_wheel(self, state):
+        return self.predict([state])[0]
+

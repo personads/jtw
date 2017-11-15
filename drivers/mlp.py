@@ -6,11 +6,11 @@ from disciples.mlp import MultiLayerPerceptron
 
 class MLPDriver(Driver):
 
-    def __init__(self):
+    def __init__(self, model_path):
         super().__init__()
-        self.epochCounter = 0
-        self.model = MultiLayerPerceptron()
-        self.model.restore('mlp_driver_100k/')
+        self.epoch = 0
+        self.jesus = MultiLayerPerceptron()
+        self.jesus.restore(model_path)
 
     def calc_gear(self, command, carstate):
         acceleration = command.accelerator
@@ -25,9 +25,11 @@ class MLPDriver(Driver):
     def drive(self, carstate: State) -> Command:
         command = Command()
         current_state = state_to_vector(carstate)
-        command_vector = self.model.predict([current_state])[0]
+        command_vector = self.jesus.take_wheel(carstate)
         command = vector_to_command(command_vector)
         self.calc_gear(command, carstate)
-        #if self.epochCounter%100 == 0: print(command_vector)
-        if self.epochCounter%100 == 0: print(carstate.speed_x, " ",carstate.speed_y, " ",carstate.speed_z)
+        if self.epoch%100 == 0:
+            print(command_vector)
+            print(carstate.speed_x, " ",carstate.speed_y, " ",carstate.speed_z)
+        self.epoch += 1
         return command
