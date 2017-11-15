@@ -2,6 +2,7 @@ from pytocl.driver import Driver
 from pytocl.car import State, Command
 
 from config import *
+from utils.data import *
 from disciples.mlp import MultiLayerPerceptron
 
 class MLPDriver(Driver):
@@ -25,7 +26,7 @@ class MLPDriver(Driver):
     def drive(self, carstate: State) -> Command:
         command = Command()
         current_state = state_to_vector(carstate)
-        command_vector = self.jesus.take_wheel(carstate)
+        command_vector = self.jesus.take_wheel(current_state)
         command = vector_to_command(command_vector)
         self.calc_gear(command, carstate)
         if self.epoch%100 == 0:
