@@ -1,6 +1,6 @@
 from pytocl.driver import Driver
 from pytocl.car import State, Command
-
+import sys
 from config import *
 from utils.data import *
 from disciples.mlp import MultiLayerPerceptron
@@ -29,7 +29,8 @@ class MLPDriver(Driver):
         command_vector = self.jesus.take_wheel(current_state)
         command = vector_to_command(command_vector)
         self.calc_gear(command, carstate)
-        if self.epoch%100 == 0:
-            print(command_vector)
+        print(carstate.distance_from_start)
+        if self.epoch > 6000:
+            sys.exit()
         self.epoch += 1
         return command
