@@ -26,11 +26,17 @@ class MultiLayerPerceptron(TensorFlowDisciple):
         self.tf_input = tf.placeholder(tf.float32, [None, STATE_VECTOR_SIZE])
         self.tf_var_w1 = tf.Variable(tf.truncated_normal([STATE_VECTOR_SIZE, self.hidden_size], stddev=0.1))
         self.tf_var_b1 = tf.Variable(tf.constant(0.1, shape=[self.hidden_size]))
-        self.tf_layer1 = tf.sigmoid(tf.matmul(self.tf_input, self.tf_var_w1) + self.tf_var_b1)
-        self.tf_var_w2 = tf.Variable(tf.truncated_normal([self.hidden_size, COMMAND_VECTOR_SIZE], stddev=0.1))
-        self.tf_var_b2 = tf.Variable(tf.constant(0.1, shape=[COMMAND_VECTOR_SIZE]))
-        self.tf_layer2 = tf.matmul(self.tf_layer1, self.tf_var_w2) + self.tf_var_b2
-        self.tf_model = self.tf_layer2
+        self.tf_layer1 = tf.tanh(tf.matmul(self.tf_input, self.tf_var_w1) + self.tf_var_b1)
+        self.tf_var_wa = tf.Variable(tf.truncated_normal([self.hidden_size, 1], stddev=0.1))
+        self.tf_var_ba = tf.Variable(tf.constant(0.1, shape=[1]))
+        self.tf_var_acc = tf.sigmoid(tf.matmul(self.tf_layer1, self.tf_var_wa) + self.tf_var_ba)
+        self.tf_var_wb = tf.Variable(tf.truncated_normal([self.hidden_size, 1], stddev=0.1))
+        self.tf_var_bb = tf.Variable(tf.constant(0.1, shape=[1]))
+        self.tf_var_brake = tf.sigmoid(tf.matmul(self.tf_layer1, self.tf_var_wb) + self.tf_var_bb)
+        self.tf_var_ws = tf.Variable(tf.truncated_normal([self.hidden_size, 1], stddev=0.1))
+        self.tf_var_bs = tf.Variable(tf.constant(0.1, shape=[1]))
+        self.tf_var_steer = tf.tanh(tf.matmul(self.tf_layer1, self.tf_var_ws) + self.tf_var_bs)
+        self.tf_model = tf.stack([self.tf_var_acc, self.tf_var_brake, self.tf_var_steer])
         # -- init loss and optimizer
         self.tf_truth = tf.placeholder(tf.float32, [None, COMMAND_VECTOR_SIZE])
         self.tf_loss = tf.reduce_mean(tf.squared_difference(self.tf_model, self.tf_truth))
