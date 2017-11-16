@@ -36,7 +36,7 @@ class MultiLayerPerceptron(TensorFlowDisciple):
         self.tf_var_ws = tf.Variable(tf.truncated_normal([self.hidden_size, 1], stddev=0.1))
         self.tf_var_bs = tf.Variable(tf.constant(0.1, shape=[1]))
         self.tf_var_steer = tf.tanh(tf.matmul(self.tf_layer1, self.tf_var_ws) + self.tf_var_bs)
-        self.tf_model = tf.stack([self.tf_var_acc, self.tf_var_brake, self.tf_var_steer])
+        self.tf_model = tf.concat([self.tf_var_acc, self.tf_var_brake, self.tf_var_steer], axis=1)
         # -- init loss and optimizer
         self.tf_truth = tf.placeholder(tf.float32, [None, COMMAND_VECTOR_SIZE])
         self.tf_loss = tf.reduce_mean(tf.squared_difference(self.tf_model, self.tf_truth))

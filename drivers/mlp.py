@@ -31,6 +31,5 @@ class MLPDriver(Driver):
         self.calc_gear(command, carstate)
         if self.epoch%100 == 0:
             print(command_vector)
-            print(carstate.speed_x, " ",carstate.speed_y, " ",carstate.speed_z)
         self.epoch += 1
         return command
