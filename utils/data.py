@@ -50,3 +50,14 @@ def apply_mask_to_vectors(data, properties, mask):
             i += properties[prop]
         res.append(cur_res)
     return res
+
+def states_to_sequences(states, sequence_length, step):
+    res = []
+    for i in range(len(states)):
+        cur_res = [[0. for _ in range(STATE_VECTOR_SIZE)] for _ in range(sequence_length)]
+        for j in range(sequence_length):
+            if i - step*j < 0:
+                break
+            cur_res[-(j+1)] = states[i - step*j]
+        res.append(cur_res)
+    return res

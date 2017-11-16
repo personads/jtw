@@ -7,11 +7,25 @@ from disciples.rnn import RecurrentNeuralNetwork
 
 class RNNDriver(Driver):
 
-    def __init__(self, model_path):
+    def __init__(self, model_path, sequence_length=10, step=30):
         super().__init__()
         self.epoch = 0
+        self.memory = [[0. for _ in range(STATE_VECTOR_SIZE)] for _ in range(sequence_length * step)]
+        self.memory_step = step
+        self.sequence_length = sequence_length
         self.jesus = RecurrentNeuralNetwork()
         self.jesus.restore(model_path)
+
+    def update_memory(self, state):
+        for i in range(1, len(memory)):
+            self.memory[i-1] = self.memory[i]
+        self.memory[-1] = state
+
+    def get_state_sequence():
+        res = []
+        for i in range(self.sequence_length):
+            res.append(self.memory[-(i*self.memory_step+1)])
+        return res
 
     def calc_gear(self, command, carstate):
         acceleration = command.accelerator
@@ -26,7 +40,9 @@ class RNNDriver(Driver):
     def drive(self, carstate: State) -> Command:
         command = Command()
         current_state = state_to_vector(carstate)
-        command_vector = self.jesus.take_wheel(current_state)
+        self.update_memory(carstate)
+        state_sequence = self.get_state_sequence()
+        command_vector = self.jesus.take_wheel(state_sequence)
         command = vector_to_command(command_vector)
         self.calc_gear(command, carstate)
         if self.epoch%100 == 0:

@@ -13,7 +13,7 @@ class RecurrentNeuralNetwork(TensorFlowDisciple):
     Recurrent Neural Network based classifier
     '''
 
-    def __init__(self, iterations=200000, hidden_size=100, layer_count=3, dropout_prob=0.5, learning_rate=0.1, tf_session=None, verbose=False):
+    def __init__(self, iterations=200000, hidden_size=100, layer_count=3, dropout_prob=0.5, sequence_length=20, learning_rate=0.1, tf_session=None, verbose=False):
         '''
         Constructor of RecurrentNeuralNetwork
         '''
@@ -24,9 +24,10 @@ class RecurrentNeuralNetwork(TensorFlowDisciple):
         self.hidden_size = hidden_size
         self.layer_count = layer_count
         self.dropout_prob = dropout_prob
+        self.sequence_length = sequence_length
         self.learning_rate = learning_rate
         # --- construct model
-        self.tf_input = tf.placeholder(tf.float32, [None, 1, STATE_VECTOR_SIZE])
+        self.tf_input = tf.placeholder(tf.float32, [None, self.sequence_length, STATE_VECTOR_SIZE])
         # --- define multi-layer rnn with gru and dropout
         self.tf_rnn_cell = tf.contrib.rnn.GRUCell(num_units=self.hidden_size)
         self.tf_rnn_dropout = tf.contrib.rnn.DropoutWrapper(self.tf_rnn_cell, output_keep_prob=self.dropout_prob)
@@ -37,7 +38,8 @@ class RecurrentNeuralNetwork(TensorFlowDisciple):
             dtype=tf.float32,
             sequence_length=self._get_seq_len(self.tf_input)
         )
-        self.tf_rnn_out = self.tf_rnn_out[:,0,:]
+        # self.tf_rnn_out = self._get_seq_last(self.tf_rnn_out, self._get_seq_len(self.tf_input))
+        self.tf_rnn_out = self._get_seq_last(self.tf_rnn_out)
         # --- output layer
         self.tf_var_wa = tf.Variable(tf.truncated_normal([self.hidden_size, 1], stddev=0.1))
         self.tf_var_ba = tf.Variable(tf.constant(0.1, shape=[1]))
@@ -57,22 +59,31 @@ class RecurrentNeuralNetwork(TensorFlowDisciple):
         self.tf_session = tf_session if tf_session else tf.Session()
         self.tf_session.run(tf.global_variables_initializer())
 
-    def _get_seq_len(self, sequence):
-        res = tf.ones([tf.shape(sequence)[0]])
-        return tf.cast(res, tf.int32)
+    # def _get_seq_len(self, sequence):
+    #     seq_binary = tf.sign(tf.reduce_max(tf.abs(sequence), axis=2)) # 1 if content, 0 if padding
+    #     res = tf.reduce_sum(seq_binary, axis=1) # sum length of content
+    #     return tf.cast(res, tf.int32)
 
-    def _convert_to_sequences(self, data):
-        res = []
-        for point in data:
-            res.append([point])
+    # def _get_seq_last(self, output, lengths):
+    #     res = None
+    #     batch_size = tf.shape(output)[0]
+    #     indices = tf.range(0, batch_size) * self.sequence_length + (lengths - 1) # determine cutoff indices
+    #     states = tf.reshape(output, [-1, self.hidden_size]) # flatten to sequence
+    #     res = tf.gather(states, indices)
+    #     return res
+
+    def _get_seq_len(self, sequence):
+        res = tf.fill([tf.shape(sequence)[0]], self.sequence_length)
         return res
+
+    def _get_seq_last(self, output):
+        return output[:,self.sequence_length-1,:]
 
     def train(self, train_in, train_out, batch_size=400):
         '''
-        Train the MLP on given data
+        Train the RNN on given data
         '''
         if self.verbose: print("training Recurrent Neural Network...")
-        train_in = self._convert_to_sequences(train_in)
         self.seek = 0
         cur_loss = 42. # init loss
         for train_i in range(self.iterations):
@@ -88,7 +99,6 @@ class RecurrentNeuralNetwork(TensorFlowDisciple):
 
     def predict(self, pred_in):
         if self.verbose: print("predicting classes...")
-        pred_in = self._convert_to_sequences(pred_in)
         res = self.tf_session.run(self.tf_model, feed_dict={self.tf_input: pred_in})
         return res
 
