@@ -13,7 +13,7 @@ class RecurrentNeuralNetwork(TensorFlowDisciple):
     Recurrent Neural Network based classifier
     '''
 
-    def __init__(self, iterations=200000, hidden_size=100, layer_count=3, dropout_prob=0.5, sequence_length=20, learning_rate=0.1, tf_session=None, verbose=False):
+    def __init__(self, iterations=200000, hidden_size=100, layer_count=3, dropout_prob=0.5, sequence_length=5, learning_rate=0.1, tf_session=None, verbose=False):
         '''
         Constructor of RecurrentNeuralNetwork
         '''
