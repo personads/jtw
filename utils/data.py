@@ -34,10 +34,19 @@ def state_to_vector(state):
 
 def vector_to_command(vector):
     res = Command()
-    res.accelerator = vector[0] 
-    res.brake = vector[1] 
-    res.steering = vector[2] 
+    res.accelerator = vector[0] if vector[0] > 0. else 0.
+    res.brake = -1. * vector[0] if vector[0] < 0. else 0.
+    res.steering = vector[1] 
     return res
+
+def condense_command_vector(vector):
+    res = [0., 0.]
+    res[0] = vector[0] - vector[1] # accelaration - brake
+    res[1] = vector[2] # steering
+    return res
+
+def condense_command_vectors(vectors):
+    return [condense_command_vector(v) for v in vectors]
 
 def apply_mask_to_vectors(data, properties, mask):
     res = []

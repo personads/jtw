@@ -36,4 +36,5 @@ STATE_MASK = [
 ]
 # length of input and output vectors
 STATE_VECTOR_SIZE = sum([STATE_PROPERTIES[prop] for prop in STATE_MASK])
-COMMAND_VECTOR_SIZE = sum([COMMAND_PROPERTIES[prop] for prop in COMMAND_MASK])
+# COMMAND_VECTOR_SIZE = sum([COMMAND_PROPERTIES[prop] for prop in COMMAND_MASK])
+COMMAND_VECTOR_SIZE = 2
