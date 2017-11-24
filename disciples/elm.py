@@ -16,7 +16,7 @@ class ExtremeLearningMachine(TensorFlowDisciple):
           random hidden nodes
     '''
 
-    def __init__(self, iterations=6000000, hidden_size=400, learning_rate=0.1, tf_session=None, verbose=False):
+    def __init__(self, iterations=6000000, hidden_size=3, learning_rate=0.2, tf_session=None, verbose=False):
         '''
         Constructor of ExtremeLearningMachine based classifier
         '''
@@ -28,24 +28,41 @@ class ExtremeLearningMachine(TensorFlowDisciple):
         self.learning_rate = learning_rate
         self.tf_input = tf.placeholder(tf.float32, [None, STATE_VECTOR_SIZE])
 
-        # hidden layer parameters, remain fixed, initialize with some part of training data
-        self.tf_b = tf.constant(0.1, shape=[1])
-        self.tf_a = tf.truncated_normal([STATE_VECTOR_SIZE, self.hidden_size], stddev=0.05)
-        self.tf_layer_1 = tf.sigmoid(tf.matmul(self.tf_input, self.tf_a) + self.tf_b)
+        # hidden layer parameters, remain fixed, initialize with some part of training data ?
+        self.tf_b_br = tf.constant(0.1, shape=[1])
+        self.tf_b_acc = tf.constant(0.1, shape=[1])
+        self.tf_b_steer = tf.constant(0.1, shape=[1])
+
+        self.tf_a_br = tf.Variable(tf.random_uniform([STATE_VECTOR_SIZE, self.hidden_size],-1,1), trainable=False)
+        self.tf_a_acc = tf.Variable(tf.random_uniform([STATE_VECTOR_SIZE, self.hidden_size], -1,1), trainable=False)
+        self.tf_a_steer = tf.Variable(tf.random_uniform([STATE_VECTOR_SIZE, self.hidden_size], -1,2), trainable=False)
+
+        self.tf_layer_1_br = tf.tanh(tf.matmul(self.tf_input, self.tf_a_br) + self.tf_b_br)
+        self.tf_layer_1_acc = tf.sigmoid(tf.matmul(self.tf_input, self.tf_a_acc) + self.tf_b_acc)
+        self.tf_layer_1_steer = tf.tanh(tf.matmul(self.tf_input, self.tf_a_steer) + self.tf_b_steer)
+
         # Network Parameters
-        self.tf_beta = tf.Variable(tf.truncated_normal([self.hidden_size, COMMAND_VECTOR_SIZE], stddev=0.1))
+        self.tf_beta_br = tf.Variable(tf.random_normal([self.hidden_size, 1], stddev=0.1))
+        self.tf_beta_acc = tf.Variable(tf.random_normal([self.hidden_size, 1], stddev=0.1))
+        self.tf_beta_steer = tf.Variable(tf.random_normal([self.hidden_size, 1], stddev=0.1))
+
+        self.output_br = tf.matmul(self.tf_layer_1_br, self.tf_beta_br)
+        self.output_acc = tf.matmul(self.tf_layer_1_acc, self.tf_beta_acc)
+        self.output_steer = tf.matmul(self.tf_layer_1_steer, self.tf_beta_steer)
+
         # Model
-        self.tf_predict = tf.matmul(self.tf_layer_1, self.tf_beta)
+        self.tf_predict = tf.concat([self.output_br, self.output_acc, self.output_steer], axis=1)
+
         # -- init loss and optimizer
-        self.tf_target = tf.placeholder(tf.float32, [None, COMMAND_VECTOR_SIZE])h
-        self.regularizer = tf.nn.l2_loss(self.tf_beta)
-        self.tf_loss = tf.reduce_mean(tf.squared_difference(self.tf_predict, self.tf_target) + 0.1 * self.regularizer) # tf.norm(self.tf_predict-self.tf_target, ord='euclidean') #, COMMAND_VECTOR_SIZE)   #tf.reduce_mean(tf.squared_difference(self.tf_predict, self.tf_target))
-        self.tf_train_step = tf.train.AdagradOptimizer(self.learning_rate).minimize(self.tf_loss)
+        self.tf_target = tf.placeholder(tf.float32, [None, COMMAND_VECTOR_SIZE])
+        self.regularizer = tf.nn.l2_loss(tf.concat([self.tf_beta_acc, self.tf_beta_br, self.tf_beta_steer],axis=1))
+        self.tf_loss = tf.norm(self.tf_predict-self.tf_target, ord='euclidean') + 0.1 * self.regularizer  #tf.reduce_mean(tf.squared_difference(self.tf_predict, self.tf_target)) # # tf.norm(self.tf_predict-self.tf_target, ord='euclidean') #, COMMAND_VECTOR_SIZE)   #tf.reduce_mean(tf.squared_difference(self.tf_predict, self.tf_target))
+        self.tf_train_step = tf.train.GradientDescentOptimizer(self.learning_rate).minimize(self.tf_loss )    # tf.train.AdagradOptimizer(self.learning_rate).minimize(self.tf_loss)
         # -- init session
         self.tf_session = tf_session if tf_session else tf.Session()
         self.tf_session.run(tf.global_variables_initializer())
 
-    def train(self, train_in, train_out, batch_size=2000):
+    def train(self, train_in, train_out, batch_size=400):
         '''
         Train the ELM on given data
         '''
