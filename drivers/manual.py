@@ -13,6 +13,7 @@ class ManualDriver(Driver):
         self.steering = 0
         self.data = []
         self.dataClean = []
+        self.max_gear = 6
 
     def check_save_data(self):
 
@@ -38,7 +39,7 @@ class ManualDriver(Driver):
             print("Clear buffer")
 
     def calc_steering(self, command):
-        STEERING_INTENSITY = 0.5
+        STEERING_INTENSITY = 0.4
         if keyboard.is_pressed("w"):
             command.accelerator = 1
         if keyboard.is_pressed("s"):
@@ -70,14 +71,16 @@ class ManualDriver(Driver):
 
             command.accelerator = min(acceleration, 1)
 
-            if carstate.rpm > 8000:
+            if carstate.rpm > 7000 and carstate.gear < self.max_gear:
                 command.gear = carstate.gear + 1
+                print("Increased gear to:", carstate.gear, "at", carstate.rpm)
 
         # else:
         #     command.brake = min(-acceleration,)
 
-        if carstate.rpm < 2500 and carstate.gear != 0:
+        if carstate.rpm < 3000 and carstate.gear != 0:
             command.gear = carstate.gear - 1
+            print("Decreased gear to:", carstate.gear, "at", carstate.rpm)
 
         if not command.gear:
             command.gear = carstate.gear or 1

@@ -19,4 +19,4 @@ while getopts ":p:" opt; do
 done
 
 echo "Jesus takes the wheel on port $port"
-run/mlp.py -p $port
+python3 run/mlp.py -p $port
