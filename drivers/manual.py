@@ -81,6 +81,10 @@ class ManualDriver(Driver):
 
         if not command.gear:
             command.gear = carstate.gear or 1
+        if keyboard.is_pressed("h"):
+            command.gear = carstate.gear - 1
+        if keyboard.is_pressed("g"):
+            command.gear = carstate.gear + 1
 
     def append_data(self, command, carstate: State):
         res = []
@@ -121,5 +125,6 @@ class ManualDriver(Driver):
         self.epochCounter += 1
         self.append_data(command,carstate)
         self.check_save_data()
+        print(carstate.distance_from_center)
 
         return command
