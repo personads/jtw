@@ -9,14 +9,15 @@ def load_csv_file(path):
             res_commands.append(line_parts[-5:]) # append command information of length 5
     return res_states, res_commands
 
-def state_to_dict(state):
+def state_to_dict(state, apply_mask=True):
     '''
     Returns dict with masked state properties
     '''
     res = {}
     for prop in STATE_PROPERTIES:
-        if prop in STATE_MASK:
-            res[prop] = eval('state.' + prop)
+        if (prop not in STATE_MASK) and apply_mask:
+            continue
+        res[prop] = eval('state.' + prop)
     return res
 
 def dict_to_vector(dict_in, properties):
@@ -29,8 +30,9 @@ def dict_to_vector(dict_in, properties):
             res.append(dict_in[prop])
     return res
 
-def state_to_vector(state):
-    return dict_to_vector(state_to_dict(state), STATE_MASK)
+def state_to_vector(state, apply_mask=True):
+    properties = STATE_MASK if apply_mask else STATE_PROPERTIES
+    return dict_to_vector(state_to_dict(state, apply_mask), properties)
 
 def vector_to_command(vector):
     res = Command()

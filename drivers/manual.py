@@ -10,6 +10,7 @@ class ManualDriver(Driver):
     def __init__(self):
         super().__init__()
         self.epochCounter = 0
+        self.expected_gear = 0
         self.steering = 0
         self.data = []
         self.dataClean = []
@@ -19,20 +20,8 @@ class ManualDriver(Driver):
 
         if keyboard.is_pressed("l"):
             self.dataClean.extend(self.data)
-            print("Added ", len(self.data), " into clean data")
+            print("Added", len(self.data), "into clean data")
             self.data = []
-
-        if keyboard.is_pressed("l") and len(self.dataClean) > 200:
-            filename = "data/" + datetime.datetime.now().strftime("%Y%m%d%H%M%S")+".csv"
-            import csv
-
-            with open(filename, 'w') as myfile:
-                wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
-                print("Saved ",len(self.dataClean)," into file")
-                for i in range(len(self.dataClean)):
-                    wr.writerow(self.dataClean[i])
-            self.dataClean = []
-
 
         if keyboard.is_pressed("j"):
             self.data = []
@@ -71,16 +60,15 @@ class ManualDriver(Driver):
 
             command.accelerator = min(acceleration, 1)
 
-            if carstate.rpm > 7000 and carstate.gear < self.max_gear:
-                command.gear = carstate.gear + 1
-                print("Increased gear to:", carstate.gear, "at", carstate.rpm)
-
-        # else:
-        #     command.brake = min(-acceleration,)
+        if carstate.rpm > 7000 and carstate.gear < self.max_gear:
+            self.expected_gear = carstate.gear + 1
 
         if carstate.rpm < 3000 and carstate.gear != 0:
-            command.gear = carstate.gear - 1
-            print("Decreased gear to:", carstate.gear, "at", carstate.rpm)
+            self.expected_gear = carstate.gear - 1
+
+        if carstate.gear != self.expected_gear:
+            command.gear = self.expected_gear
+            # print("attempting gear change from", carstate.gear, "to", self.expected_gear)
 
         if not command.gear:
             command.gear = carstate.gear or 1
@@ -117,17 +105,22 @@ class ManualDriver(Driver):
         res.append(command.focus)
         self.data.append(res)
 
+    def on_shutdown(self):
+        if len(self.dataClean) > 200:
+            filename = "data/" + datetime.datetime.now().strftime("%Y%m%d%H%M%S")+".csv"
+            import csv
+            with open(filename, 'w') as myfile:
+                wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
+                for i in range(len(self.dataClean)):
+                    wr.writerow(self.dataClean[i])
+            print("Saved ",len(self.dataClean)," into file")
 
     def drive(self, carstate: State) -> Command:
         # Interesting stuff
-
-
         command = Command()
         self.calc_steering(command)
         self.cal_acceleration(command,carstate)
         self.epochCounter += 1
         self.append_data(command,carstate)
         self.check_save_data()
-        print(carstate.distance_from_center)
-
         return command
