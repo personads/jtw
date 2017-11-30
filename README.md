@@ -17,3 +17,5 @@ A few tricks:
 F2 - switch camera mode(there are more but I think this is only one which lets you drive properly)
 
 \+ and - keys on a keyboard (might be a bit different for you) let you make the game slower/faster which comes handy when you have to make sharp turn (I found it best at 0.5 speed for normal race and sometimes switched to 0.25 when there were 90 degree + turns)
+
+I added evolutionary script for running torcs and client using python. You need to use absolute paths at run/mlp.py for model path and config_path and driver1_process(mlp.py location) in evolution.py 
