@@ -20,6 +20,6 @@ if __name__ == '__main__':
     train_commands = condense_command_vectors(apply_mask_to_vectors(train_commands, COMMAND_PROPERTIES, COMMAND_MASK))
     print("loaded", len(train_states), "data points.")
     # initialize model
-    mlp = MultiLayerPerceptron(iterations=args.iterations, verbose=True)
+    mlp = MultiLayerPerceptron(iterations=args.iterations, num_layers=2, verbose=True)
     mlp.train(train_states, train_commands)
     mlp.save(args.output_path)
