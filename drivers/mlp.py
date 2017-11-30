@@ -4,6 +4,8 @@ from pytocl.car import State, Command
 from config import *
 from utils.data import *
 from disciples.mlp import MultiLayerPerceptron
+from _datetime import datetime
+
 
 class MLPDriver(Driver):
 
@@ -12,6 +14,7 @@ class MLPDriver(Driver):
         self.epoch = 0
         self.jesus = MultiLayerPerceptron()
         self.jesus.restore(model_path)
+        self.position = -1
 
     def calc_gear(self, command, carstate):
         acceleration = command.accelerator
@@ -29,7 +32,11 @@ class MLPDriver(Driver):
         command_vector = self.jesus.take_wheel(current_state)
         command = vector_to_command(command_vector)
         self.calc_gear(command, carstate)
-        if self.epoch%100 == 0:
-            print(command_vector)
+        self.position = carstate.race_position
         self.epoch += 1
         return command
+
+    def on_shutdown(self):
+        with open("race_results/" + datetime.now().strftime('%Y-%m-%d %H:%M:%S'), "w") as file:
+            file.write(str(self.position))
+
