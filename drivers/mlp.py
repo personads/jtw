@@ -12,7 +12,7 @@ class MLPDriver(Driver):
     def __init__(self, model_path):
         super().__init__()
         self.epoch = 0
-        self.jesus = MultiLayerPerceptron()
+        self.jesus = MultiLayerPerceptron(num_layers=3)
         self.jesus.restore(model_path)
         self.position = -1
 
