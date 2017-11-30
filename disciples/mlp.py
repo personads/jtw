@@ -13,7 +13,7 @@ class MultiLayerPerceptron(TensorFlowDisciple):
     Multi-Layer Perceptron based classifier
     '''
 
-    def __init__(self, iterations=200000, hidden_size=150, learning_rate=0.05, tf_session=None, verbose=False):
+    def __init__(self, iterations=200000, num_layers=1, hidden_size=150, learning_rate=0.05, tf_session=None, verbose=False):
         '''
         Constructor of MultiLayerPerceptronClassifier
         '''
@@ -21,16 +21,20 @@ class MultiLayerPerceptron(TensorFlowDisciple):
         TensorFlowDisciple.__init__(self, iterations, tf_session, verbose)
         # init tensorflow variables
         # -- init model
+        self.num_layers = max(1, num_layers)
         self.hidden_size = hidden_size
         self.learning_rate = learning_rate
         self.tf_input = tf.placeholder(tf.float32, [None, STATE_VECTOR_SIZE])
-        self.tf_var_w1 = tf.Variable(tf.truncated_normal([STATE_VECTOR_SIZE, self.hidden_size], stddev=0.1))
-        self.tf_var_b1 = tf.Variable(tf.constant(0.1, shape=[self.hidden_size]))
-        self.tf_layer1 = tf.tanh(tf.matmul(self.tf_input, self.tf_var_w1) + self.tf_var_b1)
-        self.tf_var_w2 = tf.Variable(tf.truncated_normal([self.hidden_size, COMMAND_VECTOR_SIZE], stddev=0.1))
-        self.tf_var_b2 = tf.Variable(tf.constant(0.1, shape=[COMMAND_VECTOR_SIZE]))
-        self.tf_layer2 = tf.tanh(tf.matmul(self.tf_layer1, self.tf_var_w2) + self.tf_var_b2)
-        self.tf_model = self.tf_layer2
+        self.tf_var_wi = tf.Variable(tf.truncated_normal([STATE_VECTOR_SIZE, self.hidden_size], stddev=0.1))
+        self.tf_var_bi = tf.Variable(tf.constant(0.1, shape=[self.hidden_size]))
+        self.tf_layer_in = tf.tanh(tf.matmul(self.tf_input, self.tf_var_wi) + self.tf_var_bi)
+        self.tf_hidden = self.tf_layer_in
+        for _ in range(num_layers-1):
+            self.tf_hidden = self._create_hidden_layer(self.tf_hidden)
+        self.tf_var_wo = tf.Variable(tf.truncated_normal([self.hidden_size, COMMAND_VECTOR_SIZE], stddev=0.1))
+        self.tf_var_bo = tf.Variable(tf.constant(0.1, shape=[COMMAND_VECTOR_SIZE]))
+        self.tf_layer_out = tf.tanh(tf.matmul(self.tf_hidden, self.tf_var_wo) + self.tf_var_bo)
+        self.tf_model = self.tf_layer_out
         # -- init loss and optimizer
         self.tf_truth = tf.placeholder(tf.float32, [None, COMMAND_VECTOR_SIZE])
         self.tf_loss = tf.reduce_mean(tf.squared_difference(self.tf_model, self.tf_truth))
@@ -38,6 +42,13 @@ class MultiLayerPerceptron(TensorFlowDisciple):
         # -- init session
         self.tf_session = tf_session if tf_session else tf.Session()
         self.tf_session.run(tf.global_variables_initializer())
+        if self.verbose: print("initialised Multi-Layer Perceptron with", self.num_layers, "hidden layers")
+
+    def _create_hidden_layer(self, input_layer):
+        tf_var_w = tf.Variable(tf.truncated_normal([self.hidden_size, self.hidden_size], stddev=0.1))
+        tf_var_b = tf.Variable(tf.constant(0.1, shape=[self.hidden_size]))
+        tf_layer = tf.tanh(tf.matmul(input_layer, tf_var_w) + tf_var_b)
+        return tf_layer
 
     def train(self, train_in, train_out, batch_size=400):
         '''
