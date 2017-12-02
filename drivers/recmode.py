@@ -63,7 +63,6 @@ class rec_mode_driver(Driver):
         command = Command()
 
         if self.offTrack(carstate) == False:
-            self.jesus.restore('resources/models/mlp/')
             current_state = state_to_vector(carstate)
             command_vector = self.jesus.take_wheel(current_state)
             command = vector_to_command(command_vector)

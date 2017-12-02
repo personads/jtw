@@ -6,12 +6,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from pytocl.main import main
 from drivers.recmode import rec_mode_driver
 
-if __name__ == '__main__':
-    # argument parsing
-    arg_parser = argparse.ArgumentParser(description='Jesus Take the Wheel (MLP + autorec)')
-    arg_parser.add_argument('model_path', help='path to model folder')
-    args = arg_parser.parse_args()
+MODEL_PATH = 'resources/models/mlp/'
 
-    # get going
-    main(rec_mode_driver(args.model_path))
+if __name__ == '__main__':
+    main(rec_mode_driver(MODEL_PATH))
 
