@@ -4,6 +4,8 @@ from pytocl.driver import Driver
 from pytocl.car import State, Command
 import keyboard
 
+from utils.swarm import *
+
 class ManualDriver(Driver):
     # Override the `drive` method to create your own driver
 
@@ -120,6 +122,7 @@ class ManualDriver(Driver):
         command = Command()
         self.calc_steering(command)
         self.cal_acceleration(command,carstate)
+        apply_force_field(carstate, command)
         self.epochCounter += 1
         self.append_data(command,carstate)
         self.check_save_data()
