@@ -23,6 +23,16 @@ class ManualDriver(Driver):
             print("Added", len(self.data), "into clean data")
             self.data = []
 
+        if keyboard.is_pressed("l") and len(self.dataClean) > 200:
+            filename = "data/" + datetime.datetime.now().strftime("%Y%m%d%H%M%S") + ".csv"
+            import csv
+            with open(filename, 'w') as myfile:
+                wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
+                print("Saved ", len(self.dataClean), " into file")
+                for i in range(len(self.dataClean)):
+                    wr.writerow(self.dataClean[i])
+            self.dataClean = []
+
         if keyboard.is_pressed("j"):
             self.data = []
             print("Clear buffer")
