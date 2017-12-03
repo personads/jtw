@@ -15,16 +15,22 @@ class MLPDriver(Driver):
         self.jesus = MultiLayerPerceptron(num_layers=3)
         self.jesus.restore(model_path)
         self.position = -1
+        self.expected_gear = 0
+        self.max_gear = 6
 
     def calc_gear(self, command, carstate):
-        acceleration = command.accelerator
-        if acceleration > 0:
-            if carstate.rpm > 8000:
-                command.gear = carstate.gear + 1
-        if carstate.rpm < 2500 and carstate.gear != 0:
-            command.gear = carstate.gear - 1
+        if carstate.rpm > 7000 and carstate.gear < self.max_gear:
+            self.expected_gear = carstate.gear + 1
+
+        if carstate.rpm < 3000 and carstate.gear != 0:
+            self.expected_gear = carstate.gear - 1
+
+        if carstate.gear != self.expected_gear:
+            command.gear = self.expected_gear
+            # print("attempting gear change from", carstate.gear, "to", self.expected_gear)
         if not command.gear:
             command.gear = carstate.gear or 1
+
 
     def drive(self, carstate: State) -> Command:
         command = Command()

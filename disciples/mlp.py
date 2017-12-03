@@ -13,7 +13,7 @@ class MultiLayerPerceptron(TensorFlowDisciple):
     Multi-Layer Perceptron based classifier
     '''
 
-    def __init__(self, iterations=200000, num_layers=1, hidden_size=150, learning_rate=0.05, tf_session=None, verbose=False):
+    def __init__(self, iterations=200000, num_layers=1, hidden_size=150, learning_rate=0.01, tf_session=None, verbose=False):
         '''
         Constructor of MultiLayerPerceptronClassifier
         '''
@@ -50,7 +50,7 @@ class MultiLayerPerceptron(TensorFlowDisciple):
         tf_layer = tf.tanh(tf.matmul(input_layer, tf_var_w) + tf_var_b)
         return tf_layer
 
-    def train(self, train_in, train_out, batch_size=400):
+    def train(self, train_in, train_out, batch_size=1000):
         '''
         Train the MLP on given data
         '''
@@ -60,7 +60,7 @@ class MultiLayerPerceptron(TensorFlowDisciple):
         for train_i in range(self.iterations):
             if self.verbose:
                 sys.stdout.write('\riteration: %d of %d (%f loss)' % (train_i+1, self.iterations, cur_loss))
-                if train_i%1000 == 0: cur_loss = self.tf_session.run(self.tf_loss, feed_dict={self.tf_input: train_in, self.tf_truth: train_out})
+                if train_i % 10000 == 0: cur_loss = self.tf_session.run(self.tf_loss, feed_dict={self.tf_input: train_in, self.tf_truth: train_out})
                 sys.stdout.flush()
             # create batch
             cur_train_in, cur_train_out = self._create_next_batch(train_in, train_out, batch_size)

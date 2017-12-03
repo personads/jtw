@@ -7,7 +7,7 @@ from disciples.rnn import RecurrentNeuralNetwork
 
 class RNNDriver(Driver):
 
-    def __init__(self, model_path, sequence_length=5, step=10):
+    def __init__(self, model_path, sequence_length=10, step=1):
         super().__init__()
         self.epoch = 0
         self.memory = [[0. for _ in range(STATE_VECTOR_SIZE)] for _ in range(sequence_length * step)]
