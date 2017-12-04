@@ -4,9 +4,9 @@ import sys, os, argparse
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from pytocl.main import main
-from drivers.recmode import rec_mode_driver
+from drivers.jesus import recmode_mlp
 
-MODEL_PATH = 'resources/models/Link to mlp_3l_1m/'
+MODEL_PATH = 'resources/models/BEST_ONE_MLP/'
 
 if __name__ == '__main__':
     main(recmode_mlp(MODEL_PATH))
