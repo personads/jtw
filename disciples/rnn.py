@@ -13,7 +13,7 @@ class RecurrentNeuralNetwork(TensorFlowDisciple):
     Recurrent Neural Network based classifier
     '''
 
-    def __init__(self, iterations=200000, hidden_size=50, layer_count=2, dropout_prob=0.5, sequence_length=10, learning_rate=0.01, tf_session=None, verbose=False):
+    def __init__(self, iterations=200000, hidden_size=100, layer_count=3, dropout_prob=0.0, sequence_length=5, learning_rate=0.1, tf_session=None, verbose=False):
         '''
         Constructor of RecurrentNeuralNetwork
         '''
@@ -73,7 +73,7 @@ class RecurrentNeuralNetwork(TensorFlowDisciple):
     def _get_seq_last(self, output):
         return output[:,self.sequence_length-1,:]
 
-    def train(self, train_in, train_out, batch_size=1000):
+    def train(self, train_in, train_out, batch_size=2000):
         '''
         Train the RNN on given data
         '''
@@ -83,7 +83,7 @@ class RecurrentNeuralNetwork(TensorFlowDisciple):
         for train_i in range(self.iterations):
             if self.verbose:
                 sys.stdout.write('\riteration: %d of %d (%f loss)' % (train_i+1, self.iterations, cur_loss))
-                if train_i%20000 == 30000: cur_loss = self.tf_session.run(self.tf_loss, feed_dict={self.tf_input: train_in, self.tf_truth: train_out})
+                if train_i%10000 == 9999: cur_loss = self.tf_session.run(self.tf_loss, feed_dict={self.tf_input: train_in, self.tf_truth: train_out})
                 sys.stdout.flush()
             # create batch
             cur_train_in, cur_train_out = self._create_next_batch(train_in, train_out, batch_size)

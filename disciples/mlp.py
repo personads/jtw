@@ -13,7 +13,7 @@ class MultiLayerPerceptron(TensorFlowDisciple):
     Multi-Layer Perceptron based classifier
     '''
 
-    def __init__(self, iterations=200000, num_layers=1, hidden_size=150, learning_rate=0.01, tf_session=None, verbose=False):
+    def __init__(self, iterations=200000, num_layers=3, hidden_size=150, learning_rate=0.01, tf_session=None, verbose=False):
         '''
         Constructor of MultiLayerPerceptronClassifier
         '''

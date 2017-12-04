@@ -7,7 +7,7 @@ from disciples.rnn import RecurrentNeuralNetwork
 
 class RNNDriver(Driver):
 
-    def __init__(self, model_path, sequence_length=10, step=1):
+    def __init__(self, model_path, sequence_length=5, step=1):
         super().__init__()
         self.epoch = 0
         self.memory = [[0. for _ in range(STATE_VECTOR_SIZE)] for _ in range(sequence_length * step)]
@@ -15,6 +15,8 @@ class RNNDriver(Driver):
         self.sequence_length = sequence_length
         self.jesus = RecurrentNeuralNetwork()
         self.jesus.restore(model_path)
+        self.expected_gear = 0
+        self.max_gear = 6
 
     def update_memory(self, state):
         for i in range(1, len(self.memory)):
@@ -28,12 +30,15 @@ class RNNDriver(Driver):
         return res
 
     def calc_gear(self, command, carstate):
-        acceleration = command.accelerator
-        if acceleration > 0:
-            if carstate.rpm > 8000:
-                command.gear = carstate.gear + 1
-        if carstate.rpm < 2500 and carstate.gear != 0:
-            command.gear = carstate.gear - 1
+        if carstate.rpm > 7000 and carstate.gear < self.max_gear:
+            self.expected_gear = carstate.gear + 1
+
+        if carstate.rpm < 3000 and carstate.gear != 0:
+            self.expected_gear = carstate.gear - 1
+
+        if carstate.gear != self.expected_gear:
+            command.gear = self.expected_gear
+            # print("attempting gear change from", carstate.gear, "to", self.expected_gear)
         if not command.gear:
             command.gear = carstate.gear or 1
 
@@ -46,6 +51,6 @@ class RNNDriver(Driver):
         command = vector_to_command(command_vector)
         self.calc_gear(command, carstate)
         if self.epoch%100 == 0:
-            print(command_vector)
+            print(carstate.race_position)
         self.epoch += 1
         return command

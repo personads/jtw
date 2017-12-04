@@ -31,6 +31,7 @@ STATE_MASK = [
     'angle',
     'speed_x',
     'speed_y',
+    'speed_z',
     'distances_from_edge',
     'distance_from_center'
 ]
