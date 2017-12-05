@@ -29,33 +29,51 @@ def apply_force_field(state, command):
     if dist_front < OPPONENT_DISTANCE_MIN:
         # if distance from edges > 100
         print("opponents in front:", dist_front, dist_right, dist_back, dist_left)
-        if dist_edges > EDGE_DISTANCE_MIN and dist_edges > 0:
+        if dist_edges > EDGE_DISTANCE_MIN and dist_edges > 0 and (dist_edges_right > EDGE_DISTANCE_MIN/2 or dist_edges_left > EDGE_DISTANCE_MIN/2):
             # steer in direction of largest opening
             print("edges are far:", dist_edges, dist_edges_left, dist_edges_right)
+            # steer additionally into current direction
             avoidance_steering = AVOIDANCE_STEERING
-            # if right gap to edge is larger
-            if dist_edges_left < dist_edges_right:
-                # and if right opponent is farther away
-                if dist_left < dist_right:
-                    avoidance_steering *= -1
-            # ig left gap to edge is larger
-            else:
-                # and if right opponent is farther away
-                if dist_left < dist_right:
-                    avoidance_steering *= -1
+            if command.steering < 0:
+                avoidance_steering *= -1
+            # if not previously steering, pick side with larger freedom
+            elif command.steering == 0:
+                avoidance_steering *= 1 if dist_edges_left > dist_edges_right else -1
+            # if steering left, but edge distance insufficient, steer right
+            if avoidance_steering > 0 and dist_edges_left < EDGE_DISTANCE_MIN/2:
+                avoidance_steering *= -1
+            # if steering right, but edge distance insufficient, steer left
+            if avoidance_steering < 0 and dist_edges_right < EDGE_DISTANCE_MIN/2:
+                avoidance_steering *= -1
             # scale to distance
             avoidance_steering *= OPPONENT_DISTANCE_MIN/dist_front
             # add to steering set by holy ghost
             print("adjusting steering by:", avoidance_steering)
             command.steering += avoidance_steering
+        # if edges and opponents are too close to avoid
         else:
-            # adjust acceleration proportionally
-            print("edges are close:", dist_edges)
-            avoidance_decelaration = AVOIDANCE_DECELARATION
-            print("decelerating by:", avoidance_decelaration)
-            command.brake += avoidance_decelaration
-        print(command.accelerator, command.brake, command.steering)
+            # and car is not off track
+            if dist_edges > 0:
+                # adjust acceleration proportionally
+                print("edges are close:", dist_edges)
+                avoidance_decelaration = AVOIDANCE_DECELARATION
+                print("decelerating by:", avoidance_decelaration)
+                command.brake += avoidance_decelaration
     # if distances to rear opponent are < minimum
+    if dist_left < OPPONENT_DISTANCE_MIN:
+        print("opponents on left:", dist_left)
+        # if not already steering right
+        if command.steering >= 0:
+            if dist_edges > EDGE_DISTANCE_MIN and dist_edges > 0 and dist_right > OPPONENT_DISTANCE_MIN:
+                command.steering += -AVOIDANCE_STEERING
+                print("adjusted command steering:", command.steering)
+    if dist_right < OPPONENT_DISTANCE_MIN:
+        print("opponents on right:", dist_right)
+        # if not already steering left
+        if command.steering <= 0:
+            if dist_edges > EDGE_DISTANCE_MIN and dist_edges > 0 and dist_left > OPPONENT_DISTANCE_MIN:
+                command.steering += AVOIDANCE_STEERING
+                print("adjusted command steering:", command.steering)
     if dist_back < OPPONENT_DISTANCE_MIN:
-        print("opponents in back:", dist_front, dist_right, dist_back, dist_left)
+        print("opponents in back:", dist_back)
 
