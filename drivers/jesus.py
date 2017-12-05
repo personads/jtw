@@ -2,7 +2,6 @@ import numpy as np
 
 from pytocl.driver import Driver
 from pytocl.car import State, Command
-
 from utils.data import *
 from utils.swarm import *
 
@@ -10,6 +9,7 @@ class Jesus(Driver):
     """
     Method to guide car back onto track.
 
+    Input:
     Input:
     State vector
     'angle'
@@ -60,12 +60,17 @@ class Jesus(Driver):
                 command_vector = self.holy_ghost.take_wheel(current_state)
                 command = vector_to_command(command_vector)
                 self.calc_gear(command, carstate)
+                apply_force_field(carstate, command)
                 print(command)
+                print("position:", carstate.race_position   )
                 return command
             # reposition forward
             elif 30 < np.abs(carstate.angle) < 180:
                 if carstate.speed_x > 0:
-                    command.steering = 1
+                    if carstate.angle < 0:
+                        command.steering = -1
+                    else:
+                        command.steering = 1
                     command.gear = 1
                     command.brake = 0
                     command.accelerator = 0.3
