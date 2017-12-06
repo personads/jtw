@@ -142,7 +142,7 @@ class Jesus(Driver):
 
                 elif 88 < np.abs(carstate.angle) < 92:
                     self.drive_forward_right(command)
-                    self.state = (-1, -1)
+                    self.state = (1, -1)
 
                 elif np.abs(carstate.angle) < 88:
                     self.drive_forward_right(command)
@@ -155,14 +155,13 @@ class Jesus(Driver):
                     self.state = (-1, -1)
 
                 elif 88 < np.abs(carstate.angle) < 92:
-                    self.drive_backward_right(command)
-                    self.state = (-1, -1)
-
-                elif np.abs(carstate.angle) < 88:
                     self.drive_backward_left(command)
                     self.state = (-1, 1)
 
-       # Before returning command, check if the car is driving uphill and needs acceleration boost
+                elif np.abs(carstate.angle) < 88:
+                    self.drive_backward_right(command)
+                    self.state = (-1, -1)
+
         if self.uphill(carstate):
            command.accelerator = 0.5
 
@@ -182,35 +181,34 @@ class Jesus(Driver):
         if carstate.speed_x < self.max_unstuck_speed and np.abs(carstate.distance_from_center) > self.min_unstuck_dist:
             on_track = False
             self.rec_count = + 1
-            print()
         else:
             on_track = True
             self.rec_count = 0
         return on_track
 
-    def drive_forward_right(self, command, accelerator=.4):
-        command.steering = -1+0.2*self.rec_count
+    def drive_forward_right(self, command, accelerator=.5):
+        command.steering = -1+0.3*self.rec_count
         command.gear = 1
         command.accelerator = accelerator
         command.brake = 0
         print("driving forward right")
 
-    def drive_forward_left(self, command, accelerator=.4):
-        command.steering = 1-0.2*self.rec_count
+    def drive_forward_left(self, command, accelerator=.5):
+        command.steering = 1-0.3*self.rec_count
         command.gear = 1
         command.accelerator = accelerator
         command.brake = 0
         print("driving forward left")
 
-    def drive_backward_right(self, command, accelerator=.4):
-        command.steering = -1+0.2*self.rec_count
+    def drive_backward_right(self, command, accelerator=.5):
+        command.steering = -1+0.3*self.rec_count
         command.gear = -1
         command.accelerator = accelerator
         command.brake = 0
         print("driving backward right")
 
-    def drive_backward_left(self, command, accelerator=.4):
-        command.steering =  1-0.2*self.rec_count
+    def drive_backward_left(self, command, accelerator=.5):
+        command.steering = 1-0.3*self.rec_count
         command.gear = -1
         command.accelerator = accelerator
         command.brake = 0
