@@ -76,6 +76,7 @@ class Jesus(Driver):
         # 1)Forwards (car drives forward on track, but does not face toward center of track)
         self.recovery = self.is_stuck(carstate) if not self.recovery else self.recovery
         if self.recovery:
+            self.epochs_unmoved = 0
             if np.abs(carstate.angle) > 10:
                 recovery_steering = 1
                 if carstate.distance_from_center < 0:
@@ -95,9 +96,13 @@ class Jesus(Driver):
                 command.steering = recovery_steering if carstate.distance_from_center > 0 else -recovery_steering
                 command.gear = 1 if carstate.angle * carstate.distance_from_center > 0 else -1
             else:
+
                 command.steering = -carstate.distance_from_center
                 command.accelerator = .5
-                command.gear = 1
+                if not self.is_stuck(carstate):
+                    command.gear = 1
+                else:
+                    command.gear = -1
             # check if recovery complete
             if -10 < carstate.angle < 10 and -1 < carstate.distance_from_center < 1:
                 self.recovery = False
