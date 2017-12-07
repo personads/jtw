@@ -5,8 +5,8 @@ functions for swarm behaviour
 from utils.data import *
 
 OPPONENT_DISTANCE_MIN = 25.
-EDGE_DISTANCE_MIN = 20.
-AVOIDANCE_DECELARATION = .2
+EDGE_DISTANCE_MIN = 10.
+AVOIDANCE_DECELARATION = .05
 AVOIDANCE_STEERING = .05
 
 def collect_distances(distances, sensors=None, weights=None):
@@ -31,7 +31,7 @@ def apply_force_field(state, command):
     dist_edges_right = collect_distances(state['distances_from_edge'], [i for i in range(10, 19)])
     print("opponents distances:", dist_front, dist_right, dist_back, dist_left)
     # if front opponent distances are < minimum
-    if dist_front < OPPONENT_DISTANCE_MIN:
+    if dist_front < OPPONENT_DISTANCE_MIN and dist_edges > dist_front:
         # if distance from edges > 100
         print("opponents in front:", dist_front, dist_right, dist_back, dist_left)
         if dist_edges > EDGE_DISTANCE_MIN and dist_edges > 0 and (dist_edges_right > EDGE_DISTANCE_MIN/2 or dist_edges_left > EDGE_DISTANCE_MIN/2):
@@ -65,14 +65,14 @@ def apply_force_field(state, command):
                 print("decelerating by:", avoidance_decelaration)
                 command.brake += avoidance_decelaration
     # if distances to rear opponent are < minimum
-    if dist_left < OPPONENT_DISTANCE_MIN:
+    if dist_left < OPPONENT_DISTANCE_MIN and dist_edges_left > dist_left:
         print("opponents on left:", dist_left)
         # if not already steering right
         if command.steering >= 0:
             if dist_edges > EDGE_DISTANCE_MIN and dist_edges > 0 and dist_right > OPPONENT_DISTANCE_MIN:
                 command.steering += -AVOIDANCE_STEERING
                 print("adjusted command steering:", command.steering)
-    if dist_right < OPPONENT_DISTANCE_MIN:
+    if dist_right < OPPONENT_DISTANCE_MIN and dist_edges_right > dist_right:
         print("opponents on right:", dist_right)
         # if not already steering left
         if command.steering <= 0:

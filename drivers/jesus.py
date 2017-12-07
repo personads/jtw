@@ -33,16 +33,14 @@ class Jesus(Driver):
         self.expected_gear = 0
         self.holy_ghost = model
         # recovery
-        self.max_unstuck_speed = 5
-        self.min_unstuck_dist = .8
-        self.max_unstuck_angle = 15
-        self.state = 0
-        self.rec_count = 0
+        self.recovery = False
+        self.epochs_unmoved = 0
 
 
     def calc_gear(self, command, carstate):
         upshift = np.array([7000, 9050, 9200, 9350, 9400])
         downshift = np.array([3000, 6000, 6700, 7000, 7300])
+
         if carstate.gear < self.max_gear and carstate.rpm > upshift[carstate.gear-1]:
             self.expected_gear = carstate.gear + 1
 
@@ -56,123 +54,70 @@ class Jesus(Driver):
             command.gear = 1
 
         if not command.gear:
-            command.gear = carstate.gear or 1
+            command.gear = carstate.gear if carstate.gear else 1
 
-
+    def is_stuck(self, carstate):
+        # count unmoved epochs
+        if np.abs(carstate.speed_x) > 1:
+            self.epochs_unmoved = 0
+        else:
+            self.epochs_unmoved += 1
+        # check if stuck
+        if self.epoch < 200:
+            return False
+        if self.epochs_unmoved > 80:
+            return True
+        return False
 
     def drive(self, carstate: State) -> Command:
         command = Command()
         # Check if car is stuck
-        if self.is_on_track(carstate):
-            current_state = state_to_vector(carstate)
-
-            # NO RECOVERY (default behaviour if car is facing kind of straight)
-            if 0 < np.abs(carstate.angle) < 30:
-                command_vector = self.holy_ghost.take_wheel(current_state)
-                command = vector_to_command(command_vector)
-                self.calc_gear(command, carstate)
-                apply_force_field(carstate, command)
-                if command.accelerator == 0 or carstate.speed_y > 0:
-                   command.accelerator = 0.6
-                print(command)
-                print("position:", carstate.race_position)
-                self.state = 0
-                return command
-
-            # Steering correction
-            # 1)Forwards (car drives forward on track, but does not face toward center of track)
-            elif 30 < np.abs(carstate.angle) < 180 and carstate.speed_x > 0:
-                    # if car is facing left, steer right
-                    if carstate.angle < 0:
-                        command.steering = -1
-                    # if car is facing right, steer left
+        # Steering correction
+        # 1)Forwards (car drives forward on track, but does not face toward center of track)
+        self.recovery = self.is_stuck(carstate) if not self.recovery else self.recovery
+        if self.recovery:
+            if np.abs(carstate.angle) > 10:
+                recovery_steering = 1
+                if carstate.distance_from_center < 0:
+                    if (carstate.speed_x < -1 and carstate.angle < 0) or (carstate.speed_x > 1 and carstate.angle > 0):
+                        command.brake = 1
+                        command.accelerator = 0
                     else:
-                        command.steering = 1
-                    command.gear = 1
-                    command.brake = 0
-                    command.accelerator = 0.6
-                    self.state = 1
-
-        # RECOVERY MODE (car on track)
-        elif not self.is_on_track(carstate):
-
-            # Car stuck on 90 degree angle line
-            if 88 < np.abs(carstate.angle) < 92:
-                if carstate.angle * carstate.distance_from_center < 0:
-                    command.steering = 1
-                elif carstate.angle * carstate.distance_from_center > 0:
-                    command.steering = -1
-                command.gear = -1
-                command.brake = 0
-                command.accelerator = 0.6
-                self.state = 3
-
-            # Car points towards track center and on LHS of track
-            if carstate.angle * carstate.distance_from_center > 0 and carstate.distance_from_center > self.min_unstuck_dist:
-                if np.abs(carstate.angle) < 88:
-                    self.drive_forward_left(command)
-                    self.state = (1, 1)
-
-                elif 88 < np.abs(carstate.angle) < 92:
-                    self.drive_forward_right(command)
-                    self.state = (1, -1)
-
-                elif np.abs(carstate.angle) > 92:
-                    self.drive_backward_left(command)
-                    self.state = (-1, 1)
-
-            # Car points outwards and on LHS of track
-            if carstate.angle * carstate.distance_from_center < 0 and carstate.distance_from_center < -self.min_unstuck_dist:
-                if np.abs(carstate.angle) > 92:
-                    self.drive_backward_left(command)
-                    self.state = (-1, 1)
-
-                elif 88 < np.abs(carstate.angle) < 92:
-                    self.drive_backward_right(command)
-                    self.state = (-1, -1)
-
-                elif np.abs(carstate.angle) < 88:
-                    self.drive_backward_right(command)
-                    self.state = (-1, -1)
-
-            # Car points towards track center and on RHS of track
-            if carstate.angle * carstate.distance_from_center > 0 and np.abs(carstate.angle) >= 90:
-                if np.abs(carstate.angle) > 92:
-                    self.drive_forward_right(command)
-                    self.state = (1, -1)
-
-                elif 88 < np.abs(carstate.angle) < 92:
-                    self.drive_forward_right(command)
-                    self.state = (1, -1)
-
-                elif np.abs(carstate.angle) < 88:
-                    self.drive_forward_right(command)
-                    self.state = (1, -1)
-
-            # Car points outwards and on RHS of track
-            if carstate.angle * carstate.distance_from_center < 0 and np.abs(carstate.angle) < 90:
-                if np.abs(carstate.angle) > 92:
-                    self.drive_backward_right(command)
-                    self.state = (-1, -1)
-
-                elif 88 < np.abs(carstate.angle) < 92:
-                    self.drive_backward_left(command)
-                    self.state = (-1, 1)
-
-                elif np.abs(carstate.angle) < 88:
-                    self.drive_backward_right(command)
-                    self.state = (-1, -1)
-
-        if self.uphill(carstate):
-           command.accelerator = 0.5
-
+                        command.accelerator = 0.5
+                        command.brake = 0
+                else:
+                    if (carstate.speed_x < -1 and carstate.angle > 0) or (carstate.speed_x > 1 and carstate.angle < 0):
+                        command.brake = 1
+                        command.accelerator = 0
+                    else:
+                        command.accelerator = 0.5
+                        command.brake = 0
+                command.steering = recovery_steering if carstate.distance_from_center > 0 else -recovery_steering
+                command.gear = 1 if carstate.angle * carstate.distance_from_center > 0 else -1
+            else:
+                command.steering = -carstate.distance_from_center
+                command.accelerator = .5
+                command.gear = 1
+            # check if recovery complete
+            if -10 < carstate.angle < 10 and -1 < carstate.distance_from_center < 1:
+                self.recovery = False
+        # NO RECOVERY (default behaviour if car is facing kind of straight)
+        else:
+            current_state = state_to_vector(carstate)
+            command_vector = self.holy_ghost.take_wheel(current_state)
+            command = vector_to_command(command_vector)
+            self.calc_gear(command, carstate)
+            apply_force_field(carstate, command)
         self.epoch += 1
-        print("state:", self.state)
+        print("unmoved:", self.epochs_unmoved)
+        print("angle:", carstate.angle)
+        print("distance center:", carstate.distance_from_center)
+        print("speed_x", carstate.speed_x)
         print(command)
         return command
 
     def uphill(self, carstate: State):
-        if carstate.speed_y > 0.5:
+        if carstate.speed_z > 0.5:
             uphill = True
         else:
             uphill =False
