@@ -53,19 +53,6 @@ class Jesus(Driver):
         if not command.gear:
             command.gear = carstate.gear or 1
 
-    def calc_gear2(self, command, carstate):
-        if carstate.rpm > 7000 and carstate.gear < self.max_gear:
-            self.expected_gear = carstate.gear + 1
-
-        if carstate.rpm < 3000 and carstate.gear > 0:
-            self.expected_gear = carstate.gear - 1
-
-        if carstate.gear != self.expected_gear:
-            command.gear = self.expected_gear
-            # print("attempting gear change from", carstate.gear, "to", self.expected_gear)
-        if not command.gear:
-            command.gear = carstate.gear or 1
-
     def drive(self, carstate: State) -> Command:
         command = Command()
         # recovery check
