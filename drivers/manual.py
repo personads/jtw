@@ -136,4 +136,5 @@ class ManualDriver(Driver):
         self.epochCounter += 1
         self.append_data(command,carstate)
         self.check_save_data()
+        print(carstate.distance_from_start)
         return command

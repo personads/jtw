@@ -37,7 +37,23 @@ class Jesus(Driver):
         self.min_unstuck_dist = .5
         self.max_unstuck_angle = 15
 
+
     def calc_gear(self, command, carstate):
+        upshift = np.array([7000, 9050, 9200, 9350, 9400])
+        downshift = np.array([3000, 6000, 6700, 7000, 7300])
+        if carstate.gear < self.max_gear and carstate.rpm > upshift[carstate.gear-1]:
+            self.expected_gear = carstate.gear + 1
+
+        elif carstate.rpm < downshift[carstate.gear-2] and carstate.gear > 0:
+            self.expected_gear = carstate.gear - 1
+
+        if carstate.gear != self.expected_gear:
+            command.gear = self.expected_gear
+            # print("attempting gear change from", carstate.gear, "to", self.expected_gear)
+        if not command.gear:
+            command.gear = carstate.gear or 1
+
+    def calc_gear2(self, command, carstate):
         if carstate.rpm > 7000 and carstate.gear < self.max_gear:
             self.expected_gear = carstate.gear + 1
 
@@ -61,8 +77,8 @@ class Jesus(Driver):
                 command = vector_to_command(command_vector)
                 self.calc_gear(command, carstate)
                 apply_force_field(carstate, command)
-                print(command)
-                print("position:", carstate.race_position   )
+                #print(command)
+                #print("position:", carstate.race_position   )
                 return command
             # reposition forward
             elif 30 < np.abs(carstate.angle) < 180:
