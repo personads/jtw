@@ -1,5 +1,7 @@
 from config import *
 
+from pytocl.car import State, Command
+
 def load_csv_file(path):
     res_states, res_commands = [], []
     with open(path, 'r') as fop:

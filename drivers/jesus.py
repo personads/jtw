@@ -148,6 +148,7 @@ class Jesus(Driver):
         command = Command()
         angle_change = 2
         self.check_jesus_position(carstate)
+        print("close to jesus:", self.close_to_jesus)
         # enter obstruction mode
         if self.cheesus_state == 0:
             # come to a stop
@@ -235,24 +236,25 @@ class Jesus(Driver):
         Main driving method
         '''
         command = Command()
-        # Check if car is stuck
-        self.recovery = self.is_stuck(carstate) if not self.recovery else self.recovery
-        # if car is stuck, go into recovery mode
-        if self.recovery:
-            command = self.recovery_drive(carstate)
-        # if car is not stuck, proceed normally
-        else:
-            # if not cheesus, drive normally
-            if not self.is_cheesus():
-                command = self.default_drive(carstate)
-            # if car has entered cheesus mode
+        # if not cheesus, drive normally
+        if not self.is_cheesus():
+            # Check if car is stuck
+            self.recovery = self.is_stuck(carstate) if not self.recovery else self.recovery
+            # if car is stuck, go into recovery mode
+            if self.recovery:
+                command = self.recovery_drive(carstate)
+            # if car is not stuck, proceed normally
             else:
-                command = self.cheesy_drive(carstate)
+                command = self.default_drive(carstate)
+        # if car has entered cheesus mode
+        else:
+            command = self.cheesy_drive(carstate)
         self.epoch += 1
         print("unmoved:", self.epochs_unmoved)
         print("angle:", carstate.angle)
         print("distance center:", carstate.distance_from_center)
-        print("speed_x", carstate.speed_x)
+        print("speed_x:", carstate.speed_x)
+        print("cheesus:", self.cheesus_state)
         print(command)
         return command
 
@@ -260,7 +262,7 @@ class Jesus(Driver):
     def is_cheesus(self):
         res = False
         if self.cheesus_state is None:
-            if self.epoch % 100 == 0:
+            if self.epoch % 25 == 0:
                 if os.path.isfile(PATH_TRACK_POSITION):
                     self.cheesus_state = 0
         elif self.cheesus_state >= 0:
@@ -276,6 +278,13 @@ class Jesus(Driver):
             self.track_length = carstate.distance_raced
             self.cheesus_state = -1
             print("measured track as:", self.track_length)
+            try:
+                with open(PATH_TRACK_POSITION, 'w') as fop:
+                    track_position = carstate.distance_raced % self.track_length
+                    fop.write(str(track_position))
+                    print("saved track position to:", PATH_TRACK_POSITION)
+            except:
+                print("could not write track position to:", PATH_TRACK_POSITION)
         # communicating track position
         if self.epoch % 100 == 0 and self.track_length:
             try:
@@ -288,7 +297,7 @@ class Jesus(Driver):
 
 
     def check_jesus_position(self, carstate):
-        if self.epochCounter % 100 == 0:
+        if self.epoch % 100 == 0:
             # Jesus is always close by default
             self.close_to_jesus = False
             try:
