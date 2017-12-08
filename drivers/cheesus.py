@@ -3,6 +3,7 @@ import numpy as np
 from pytocl.driver import Driver
 from pytocl.car import State, Command
 
+from utils.config import *
 from utils.data import *
 
 
@@ -15,6 +16,22 @@ class Cheesus(Driver):
         self.corrections = 0
         self.state = -1
         self.last_angle = 0
+        self.close_to_jesus = False
+
+    def check_jesus_track_position(self, carstate):
+        if self.epochCounter % 100 == 0:
+            # Jesus is always close by default
+            self.close_to_jesus = False
+            try:
+                with open(PATH_TRACK_POSITION, 'r') as fop:
+                    jesus_track_position = int(''.join(fop.readlines()))
+                # check if Jesus is close
+                jesus_cheesus_distance = np.abs(carstate.distance_from_start - jesus_track_position)
+                if jesus_cheesus_distance < 500:
+                    self.close_to_jesus = True
+            except:
+                print("could not read track position from:", PATH_TRACK_POSITION)
+
 
     def smooth_steer(self, state, target, command):
         steering_error = target - state.distance_from_center
@@ -87,12 +104,14 @@ class Cheesus(Driver):
             if carstate.speed_x < 0:
                 command.brake = 1
             if carstate.distances_from_edge[9] > 0 and carstate.distances_from_edge[9] < 0.40 * self.race_width:
-                self.state = 4
-                if carstate.angle > -89:
-                    command.steering = -0.1
-                if carstate.angle < -91:
-                    command.steering = 0.1
-
+                if self.close_to_jesus:
+                    command.accelerator = 1
+                else:
+                    self.state = 4
+            if carstate.angle > -89:
+                command.steering = -0.1
+            if carstate.angle < -91:
+                command.steering = 0.1
 
         elif self.state == 4:
             command.gear = -1
@@ -102,7 +121,10 @@ class Cheesus(Driver):
             if carstate.speed_x > 0:
                 command.brake = 1
             if carstate.distances_from_edge[9] < 0 or carstate.distances_from_edge[9] > 0.55 * self.race_width:
-                self.state = 3
+                if self.close_to_jesus:
+                    command.accelerator = 1
+                else:
+                    self.state = 3
             if carstate.angle > -89:
                 command.steering = -0.1
             if carstate.angle < -91:
@@ -110,5 +132,3 @@ class Cheesus(Driver):
         print(self.state)
         return command
 
-    def on_shutdown(self):
-        pass

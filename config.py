@@ -1,7 +1,5 @@
 from collections import OrderedDict
 
-from pytocl.car import State, Command
-
 # properties in OrderedDict('name': length) format
 COMMAND_PROPERTIES = OrderedDict([('accelerator', 1), ('brake', 1), ('gear', 1), ('steering', 1), ('focus', 1)])
 STATE_PROPERTIES = OrderedDict([
@@ -39,3 +37,5 @@ STATE_MASK = [
 STATE_VECTOR_SIZE = sum([STATE_PROPERTIES[prop] for prop in STATE_MASK])
 # COMMAND_VECTOR_SIZE = sum([COMMAND_PROPERTIES[prop] for prop in COMMAND_MASK])
 COMMAND_VECTOR_SIZE = 2
+# file paths for inter-controller communication
+PATH_TRACK_POSITION = 'jesus.state'

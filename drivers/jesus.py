@@ -1,7 +1,10 @@
+import os
+
 import numpy as np
 
 from pytocl.driver import Driver
 from pytocl.car import State, Command
+from utils.config import *
 from utils.data import *
 from utils.swarm import *
 
@@ -29,6 +32,7 @@ class Jesus(Driver):
         super().__init__()
         # meta
         self.epoch = 0
+        self.track_length = None
         self.max_gear = 6
         self.expected_gear = 0
         self.holy_ghost = model
@@ -36,6 +40,21 @@ class Jesus(Driver):
         self.recovery = False
         self.epochs_unmoved = 0
 
+
+    def comm_track_position(self, carstate):
+        # measuring track length
+        if carstate.last_lap_time > 0 and not self.track_length:
+            self.track_length = carstate.distance_raced
+            print("measured track as:", self.track_length)
+        # communicating track position
+        if self.epoch % 100 == 0:
+            try:
+                with open(PATH_TRACK_POSITION, 'w') as fop:
+                    track_position = carstate.distance_raced % self.track_length
+                    fop.write(str(track_position))
+                    print("saved track position to:", PATH_TRACK_POSITION)
+            except:
+                print("could not write track position to:", PATH_TRACK_POSITION)
 
     def calc_gear(self, command, carstate):
         upshift = np.array([7000, 9050, 9200, 9350, 9400])
@@ -96,7 +115,6 @@ class Jesus(Driver):
                 command.steering = recovery_steering if carstate.distance_from_center > 0 else -recovery_steering
                 command.gear = 1 if carstate.angle * carstate.distance_from_center > 0 else -1
             else:
-
                 command.steering = -carstate.distance_from_center
                 command.accelerator = .5
                 if not self.is_stuck(carstate):
@@ -120,3 +138,10 @@ class Jesus(Driver):
         print("speed_x", carstate.speed_x)
         print(command)
         return command
+
+    def on_shutdown(self):
+        # delete track position file
+        try:
+            os.remove(PATH_TRACK_POSITION)
+        except:
+            print("could not remove track position file:", PATH_TRACK_POSITION)
