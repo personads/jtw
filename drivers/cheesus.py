@@ -3,7 +3,7 @@ import numpy as np
 from pytocl.driver import Driver
 from pytocl.car import State, Command
 
-from utils.config import *
+from config import *
 from utils.data import *
 
 
