@@ -43,8 +43,7 @@ class Jesus(Driver):
         self.last_gear_shift = -100
         self.my_gear = 0
         # cheesus
-        # self.cheesus_state = None
-        self.cheesus_state = 0
+        self.cheesus_state = None
         self.track_width = 0
         self.last_angle = 0
         self.close_to_jesus = False
