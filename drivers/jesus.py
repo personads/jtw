@@ -267,7 +267,7 @@ class Jesus(Driver):
                     command.brake = 1
         # turning procedure
         elif self.cheesus_state == 2:
-            if carstate.angle < -89 and carstate.angle > -91:
+            if np.abs(carstate.angle) > 88:
                 self.cheesus_state = 3
             else:
                 if carstate.angle < self.last_angle - angle_change:
@@ -289,39 +289,22 @@ class Jesus(Driver):
             if carstate.speed_x > -1:
                 self.cheesus_state = 4
         # oscillation forward
-        elif self.cheesus_state == 4:
-            command.gear = 1
+        elif self.cheesus_state in [4, 5]:
+            command.gear = 1 if self.cheesus_state == 4 else -1
             command.steering = 0
-            if carstate.speed_x < 10:
+            if np.abs(carstate.speed_x) < 3:
                 command.accelerator = 1
-            if carstate.speed_x < 0:
-                command.brake = 1
-            if carstate.distances_from_edge[9] > 0 and carstate.distances_from_edge[9] < 0.40 * self.track_width:
+            if (self.cheesus_state == 4 and carstate.distance_from_center > .03 * self.track_width)\
+                or (self.cheesus_state == 5 and carstate.distance_from_center < -.03 * self.track_width):
                 if self.close_to_jesus:
-                    command.accelerator = 1
+                    command.accelarator = .5
                 else:
-                    self.cheesus_state = 5
-            if carstate.angle > -89:
-                command.steering = -0.1
-            if carstate.angle < -91:
-                command.steering = 0.1
-        # oscillation backward
-        elif self.cheesus_state == 5:
-            command.gear = -1
-            command.steering = 0
-            if carstate.speed_x > -10:
-                command.accelerator = 1
-            if carstate.speed_x > 0:
-                command.brake = 1
-            if carstate.distances_from_edge[9] < 0 or carstate.distances_from_edge[9] > 0.55 * self.track_width:
-                if self.close_to_jesus:
-                    command.accelerator = 1
-                else:
-                    self.cheesus_state = 4
-            if carstate.angle > -89:
-                command.steering = -0.1
-            if carstate.angle < -91:
-                command.steering = +0.1
+                    command.brake = 1
+                    self.cheesus_state = 5 if self.cheesus_state == 4 else 4
+            if np.abs(carstate.angle) < 89:
+                command.steering = -0.2
+            if np.abs(carstate.angle) > 91:
+                command.steering = 0.2
         return command
 
 
@@ -391,7 +374,7 @@ class Jesus(Driver):
 
 
     def check_jesus_position(self, carstate):
-        if self.epoch % 100 == 0:
+        if self.epoch % 50 == 0:
             # Jesus is always close by default
             self.close_to_jesus = False
             try:
@@ -407,7 +390,8 @@ class Jesus(Driver):
 
     def on_shutdown(self):
         # delete track position file
-        try:
-            os.remove(PATH_TRACK_POSITION)
-        except:
-            print("could not remove track position file:", PATH_TRACK_POSITION)
+        if not self.is_cheesus():
+            try:
+                os.remove(PATH_TRACK_POSITION)
+            except:
+                print("could not remove track position file:", PATH_TRACK_POSITION)
