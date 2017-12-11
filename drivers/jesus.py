@@ -48,6 +48,9 @@ class Jesus(Driver):
         self.last_angle = 0
         self.close_to_jesus = False
 
+        #avoidance
+        self.last_influence = 0
+
 
     def calc_gear(self, command, carstate):
         '''
@@ -71,6 +74,47 @@ class Jesus(Driver):
                 self.last_gear_shift = self.epoch
 
         command.gear = self.my_gear
+
+    def avoidance(self, carstate: State, command: Command):
+        dist_threshold_head = 25
+
+        if carstate.speed_x > 50:
+            dist_threshold_head = 70
+
+        dist_threshold_mask = [3 for i in range(36)]
+        dist_threshold_mask[0] = 0
+        dist_threshold_mask[18] = dist_threshold_head
+        dist_threshold_mask[17] = dist_threshold_head
+        dist_threshold_mask[19] = dist_threshold_head
+
+        wall_threshold = 2
+        adjust_cap = 0.5
+
+        #middle
+        for i in range(1, 4):
+            dist_threshold_mask[19 + i] = dist_threshold_head - 5
+            dist_threshold_mask[17 - i] = dist_threshold_head - 5
+
+        go_left_influence = 0
+        go_right_influence = 0
+
+        car_influence_threshold = 0
+        for i in range(16, 21):
+            if carstate.opponents[i] <= dist_threshold_mask[i]:
+                influence = carstate.opponents[i] / dist_threshold_mask[i]
+                go_right_influence += influence
+                go_left_influence += influence
+        print("right influence", go_right_influence)
+        print("left influence", go_left_influence)
+        # if carstate.distance_from_center > 0:
+        #     go_left_influence *= np.abs(1-carstate.distance_from_center)
+        # else:
+        #     go_right_influence *= np.abs(1 + carstate.distance_from_center)
+        adjust = 0
+
+
+
+
 
 
 
@@ -132,13 +176,16 @@ class Jesus(Driver):
                 command.steering = 0.1
                 # print("Steering assistant", self.epoch)
         if carstate.distance_from_center < -1:
-            if carstate.angle < -20:
+            if carstate.angle > -20:
                 command.steering = 0.1
             elif carstate.angle < -30:
                 command.steering = -0.1
                 # print("Steering assistant", self.epoch)
         #print(command)
+        apply_force_field(carstate, command)
+        #self.avoidance(carstate, command)
         self.save_track_position(carstate)
+
         return command
 
 
@@ -147,14 +194,14 @@ class Jesus(Driver):
         Recovery driving behaviour
         '''
         ANGLE_THRESHOLD = 10
-        BRAKING_CENTER_TRACK_THRESHOLD = 0.1
+        BRAKING_CENTER_TRACK_THRESHOLD = 0
 
         command = Command()
-        self.epochs_unmoved = 0
+        self.epochs_unmoved = 0.05
         print("Recovery")
 
         if np.abs(carstate.angle) > ANGLE_THRESHOLD:
-            recovery_steering = 1
+            recovery_steering = 0.9
             command.steering = recovery_steering if carstate.distance_from_center > 0 else -recovery_steering
             command.gear = 1 if carstate.angle * carstate.distance_from_center > 0 else -1
 
@@ -179,7 +226,7 @@ class Jesus(Driver):
                     command.accelerator = 0.5
                     command.brake = 0
         else:
-            command.steering = -0.5 if carstate.distance_from_center > 0 else 0.5
+            command.steering = -1 if carstate.distance_from_center > 0 else 1
             command.accelerator = .5
             command.gear = -1
         # check if recovery complete
