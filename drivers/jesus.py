@@ -269,7 +269,6 @@ class Jesus(Driver):
         command = Command()
         angle_change = 2
         self.check_jesus_position(carstate)
-        print("close to jesus:", self.close_to_jesus)
         # enter obstruction mode
         if self.cheesus_state == 0:
             # come to a stop
@@ -323,10 +322,8 @@ class Jesus(Driver):
                 command.accelerator = 1
             if (self.cheesus_state == 4 and carstate.distance_from_center > .03 * self.track_width)\
                 or (self.cheesus_state == 5 and carstate.distance_from_center < -.03 * self.track_width):
-                if self.close_to_jesus:
-                    command.accelarator = .5
-                else:
-                    command.brake = 1
+                command.brake = 1
+                if not self.close_to_jesus:
                     self.cheesus_state = 5 if self.cheesus_state == 4 else 4
             if np.abs(carstate.angle) < 89:
                 command.steering = -0.2
@@ -341,7 +338,7 @@ class Jesus(Driver):
         '''
         command = Command()
         # if not cheesus, drive normally
-        if not self.is_cheesus():
+        if not self.is_cheesus(carstate):
             # Check if car is stuck
             self.recovery = self.is_stuck(carstate) if not self.recovery else self.recovery
             # if car is stuck, go into recovery mode
@@ -370,7 +367,8 @@ class Jesus(Driver):
         return command
 
 
-    def is_cheesus(self):
+    def is_cheesus(self, carstate):
+        return False
         res = False
         if self.cheesus_state is None:
             if self.epoch % 25 == 0:
@@ -413,19 +411,21 @@ class Jesus(Driver):
             self.close_to_jesus = False
             try:
                 with open(PATH_TRACK_POSITION, 'r') as fop:
-                    jesus_track_position = int(''.join(fop.readlines()))
+                    jesus_track_position = float(''.join(fop.readlines()))
                 # check if Jesus is close
-                jesus_cheesus_distance = np.abs(carstate.distance_from_start - jesus_track_position)
-                if jesus_cheesus_distance < 500:
+                cheesus_track_position = carstate.distance_from_start
+                jesus_cheesus_distance = np.abs(cheesus_track_position - jesus_track_position)
+                print("jeesus cheesus distance:", jesus_cheesus_distance)
+                if jesus_cheesus_distance < 300:
                     self.close_to_jesus = True
-            except:
+            except Exception as ex:
                 print("could not read track position from:", PATH_TRACK_POSITION)
+            print("close to jesus:", self.close_to_jesus)
 
 
     def on_shutdown(self):
         # delete track position file
-        if not self.is_cheesus():
-            try:
-                os.remove(PATH_TRACK_POSITION)
-            except:
-                print("could not remove track position file:", PATH_TRACK_POSITION)
+        try:
+            os.remove(PATH_TRACK_POSITION)
+        except:
+            print("could not remove track position file:", PATH_TRACK_POSITION)
