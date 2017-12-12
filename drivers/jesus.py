@@ -123,7 +123,7 @@ class Jesus(Driver):
         Check whether car is stuck
         '''
         # count unmoved epochs
-        if np.abs(carstate.speed_x) > 1 and np.abs(carstate.angle) < 90:
+        if np.abs(carstate.speed_x) > 5 and np.abs(carstate.angle) < 90:
             self.epochs_unmoved = 0
         else:
             self.epochs_unmoved += 1
@@ -194,10 +194,10 @@ class Jesus(Driver):
         Recovery driving behaviour
         '''
         ANGLE_THRESHOLD = 10
-        BRAKING_CENTER_TRACK_THRESHOLD = 0
+        BRAKING_CENTER_TRACK_THRESHOLD = 0.1
 
         command = Command()
-        self.epochs_unmoved = 0.05
+        self.epochs_unmoved = 0
         print("Recovery")
 
         if np.abs(carstate.angle) > ANGLE_THRESHOLD:
