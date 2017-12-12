@@ -92,7 +92,7 @@ class Jesus(Driver):
         dist_threshold = min(carstate.speed_x, 40)
         if np.abs(self.avoidance_state) > 0:
             return True
-        if dist_edges_f > 150:
+        if dist_edges_f > 150 and carstate.speed_y < 3:
             # print("enough space in front:", dist_edges_f, dist_edges_fl, dist_edges_fr)
             if min([dist_opponents_f, dist_opponents_fl, dist_opponents_fr]) < dist_threshold:
                 if dist_edges_l > 2 or dist_edges_r > 2:
