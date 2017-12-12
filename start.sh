@@ -19,4 +19,8 @@ while getopts ":p:" opt; do
 done
 
 echo "Jesus takes the wheel on port $port"
+if [ -f ./jesus.state ]; then
+    rm ./jesus.state
+    echo "Removed Jesus State File"
+fi
 python3 run/mlp.py -p $port
