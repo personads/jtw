@@ -47,9 +47,9 @@ class Jesus(Driver):
         self.track_width = 0
         self.last_angle = 0
         self.close_to_jesus = False
-
         #avoidance
-        self.last_influence = 0
+        self.avoidance_state = 0
+        self.last_acceleration = 0
 
 
     def calc_gear(self, command, carstate):
@@ -75,47 +75,43 @@ class Jesus(Driver):
 
         command.gear = self.my_gear
 
-    def avoidance(self, carstate: State, command: Command):
-        dist_threshold_head = 25
 
-        if carstate.speed_x > 50:
-            dist_threshold_head = 70
+    def should_overtake(self, carstate):
+        state = state_to_dict(carstate, apply_mask=False)
+        # collect distance to opponents in front
+        dist_opponents_f = state['opponents'][17]
+        dist_opponents_fl = state['opponents'][16]
+        dist_opponents_fr = state['opponents'][18]
+        # collect edge distances
+        dist_edges_f = state['distances_from_edge'][9]
+        dist_edges_fl = state['distances_from_edge'][8]
+        dist_edges_fr = state['distances_from_edge'][10]
+        dist_edges_l = state['distances_from_edge'][0]
+        dist_edges_r = state['distances_from_edge'][17]
 
-        dist_threshold_mask = [3 for i in range(36)]
-        dist_threshold_mask[0] = 0
-        dist_threshold_mask[18] = dist_threshold_head
-        dist_threshold_mask[17] = dist_threshold_head
-        dist_threshold_mask[19] = dist_threshold_head
-
-        wall_threshold = 2
-        adjust_cap = 0.5
-
-        #middle
-        for i in range(1, 4):
-            dist_threshold_mask[19 + i] = dist_threshold_head - 5
-            dist_threshold_mask[17 - i] = dist_threshold_head - 5
-
-        go_left_influence = 0
-        go_right_influence = 0
-
-        car_influence_threshold = 0
-        for i in range(16, 21):
-            if carstate.opponents[i] <= dist_threshold_mask[i]:
-                influence = carstate.opponents[i] / dist_threshold_mask[i]
-                go_right_influence += influence
-                go_left_influence += influence
-        print("right influence", go_right_influence)
-        print("left influence", go_left_influence)
-        # if carstate.distance_from_center > 0:
-        #     go_left_influence *= np.abs(1-carstate.distance_from_center)
-        # else:
-        #     go_right_influence *= np.abs(1 + carstate.distance_from_center)
-        adjust = 0
-
-
-
-
-
+        dist_threshold = min(carstate.speed_x, 40)
+        if np.abs(self.avoidance_state) > 0:
+            return True
+        if dist_edges_f > 150:
+            # print("enough space in front:", dist_edges_f, dist_edges_fl, dist_edges_fr)
+            if min([dist_opponents_f, dist_opponents_fl, dist_opponents_fr]) < dist_threshold:
+                if dist_edges_l > 2 or dist_edges_r > 2:
+                    # print("opponents in front:", dist_opponents_f, dist_opponents_fl, dist_opponents_fr)
+                    dist_opponents_f = dist_opponents_f if dist_opponents_f < dist_threshold else 200
+                    dist_opponents_fr = dist_opponents_fr if dist_opponents_fr < dist_threshold else 200
+                    dist_opponents_fl = dist_opponents_fl if dist_opponents_fl < dist_threshold else 200
+                    if dist_opponents_fl > dist_opponents_fr and dist_edges_l >= 3:
+                        self.avoidance_state = 1
+                    elif dist_opponents_fl > dist_opponents_fr and dist_edges_l < 3:
+                        self.avoidance_state = -1
+                    elif dist_opponents_fl < dist_opponents_fr and dist_edges_r >= 3:
+                        self.avoidance_state = -1
+                    elif dist_opponents_fl < dist_opponents_fr and dist_edges_r < 3:
+                        self.avoidance_state = 1
+                    else:
+                        self.avoidance_state = 1 if dist_edges_l > dist_edges_r else -1
+                    return True
+        return False
 
 
     def is_stuck(self, carstate):
@@ -134,19 +130,6 @@ class Jesus(Driver):
             return True
         return False
 
-    def emergency_brake(self, carstate: State, command: Command):
-
-        if carstate.distances_from_edge[9] < carstate.speed_x * 1.3 and carstate.speed_x > 60:
-            if command.accelerator > 0.1:
-                command.accelerator = 0
-            if self.epoch % 2 == 0 and self.emer_brake < 0.8 and command.brake < 0.2:
-                self.emer_brake += 0.2
-            command.brake = self.emer_brake
-            print("Distance from edge", carstate.distances_from_edge[9])
-            print("Speed x", carstate.speed_x)
-            print("Emergency Brake!!!", carstate.speed_x)
-        else:
-            self.emer_brake = 0
 
     def default_drive(self, carstate):
         '''
@@ -158,8 +141,6 @@ class Jesus(Driver):
         command_vector = self.holy_coast.take_wheel(current_state)
         command = vector_to_command(command_vector)
         self.calc_gear(command, carstate)
-        #   apply_force_field(carstate, command)
-        # self.emergency_brake(carstate, command)
 
         if np.abs(carstate.distance_from_center) > 1 and carstate.speed_x < 20:
             command.brake = 0
@@ -181,11 +162,56 @@ class Jesus(Driver):
             elif carstate.angle < -30:
                 command.steering = -0.1
                 # print("Steering assistant", self.epoch)
-        #print(command)
         apply_force_field(carstate, command)
-        #self.avoidance(carstate, command)
         self.save_track_position(carstate)
 
+        return command
+
+    def overtake_drive(self, carstate):
+        '''
+        Behaviour for overtaking opponents
+        '''
+        print("Overtaking")
+        command = Command()
+
+        state = state_to_dict(carstate, apply_mask=False)
+        # collect distance to opponents in front
+        dist_opponents_f = state['opponents'][17]
+        dist_opponents_l = state['opponents'][8]
+        dist_opponents_r = state['opponents'][26]
+        # sanity checks
+        if min(state['opponents']) > min(carstate.speed_x, 40):
+            self.avoidance_state = 0
+            print("sanity giving back control (opponents)")
+            return command
+        if np.abs(carstate.distance_from_center) > .9:
+            self.avoidance_state = 0
+            print("sanity giving back control (center)")
+            return command
+        # init avoidance steering
+        avoidance_steering = .1 * np.sign(self.avoidance_state)
+        # check if already overtaking
+        if np.abs(self.avoidance_state) == 1 and np.abs(carstate.angle) > min(10, 250 / carstate.speed_x):
+            self.avoidance_state = 2 * np.sign(self.avoidance_state)
+        # check if we should steer back
+        if np.abs(self.avoidance_state) == 2:
+            avoidance_steering *= -1
+            # check if car should stop steering
+            if np.abs(carstate.angle) < 5:
+                avoidance_steering = 0
+                self.avoidance_state = 3 * np.sign(self.avoidance_state)
+        # check if pass was completed
+        if self.avoidance_state == 3 and dist_opponents_l > 10:
+            avoidance_steering = 0
+            self.avoidance_state = 0
+        if self.avoidance_state == -3 and dist_opponents_r > 10:
+            avoidance_steering = 0
+            self.avoidance_state = 0
+        # create command
+        command.steering = avoidance_steering
+        print("avoidance steering: ", avoidance_steering)
+        command.accelerator = 1
+        command.gear = self.my_gear
         return command
 
 
@@ -232,6 +258,7 @@ class Jesus(Driver):
         # check if recovery complete
         if -ANGLE_THRESHOLD < carstate.angle < ANGLE_THRESHOLD:
             self.recovery = False
+            print("The lord hath risen!")
         return command
 
 
@@ -322,10 +349,17 @@ class Jesus(Driver):
                 command = self.recovery_drive(carstate)
             # if car is not stuck, proceed normally
             else:
-                command = self.default_drive(carstate)
+                # if car should overtake, go into overtaking mode
+                if self.should_overtake(carstate):
+                    print("avoidance state:", self.avoidance_state)
+                    command = self.overtake_drive(carstate)
+                # if car is free of opponents, drive normally
+                else:
+                    command = self.default_drive(carstate)
         # if car has entered cheesus mode
         else:
             command = self.cheesy_drive(carstate)
+        self.last_acceleration = command.accelerator
         self.epoch += 1
         # print("unmoved:", self.epochs_unmoved)
         # print("angle:", carstate.angle)
