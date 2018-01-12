@@ -88,4 +88,4 @@ $ python3 run/elm.py
 
 ---
 
-Christina, David and Max wish you succesful autonomous racing!
+Christina, David and Max wish you successful autonomous racing!
