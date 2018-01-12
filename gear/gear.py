@@ -28,7 +28,7 @@ def test_population(population):
     for i in range(len(population)):
         print("For Max:", i)
         np.save(GEAR_DIR + "/active", population[i])
-        subprocess.call("/home/kuro/Projects/ComputationalIntelligence/torcs-client/JesusTakeTheWheel/train.sh")
+        subprocess.call(GEAR_DIR + "/train.sh")
         with open(GEAR_DIR + '/result.txt') as f:
             for line in f:
                 result.append(float(line))
